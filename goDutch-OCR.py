@@ -31,30 +31,7 @@ from matplotlib.lines import Line2D
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
 #Photo to OCR
-filename = '/Users/seanchan/Downloads/testreceipt.jpeg'
-
-'''
-******BOT FUNCTIONS*******
-'''
-
-#Bot functions
-def start(update,context):
-	context.bot.send_message(chat_id=update.message.chat_id,text="I'm a bot, please talk to me!")
-	
-def echo(update,context):
-	context.bot.send_message(chat_id=update.message.chat_id,text=update.message.text)
-
-def caps(update,context):
-	text_caps = ' '.join(args).upper()
-	context.bot.send_message(chat_id=update.message.chat_id,text=text_caps)
-	
-def image(update,context):
-        context.bot.send_message(chat_id=update.message.chat_id,text='Processing receipt...')
-        photo_file = context.bot.get_file(update.message.photo[-1].file_id)
-        save_path = '/Users/seanchan/Documents/Orbital/'
-        filename = os.path.join(save_path,'{}.jpg'.format(photo_file.file_id))
-        photo_file.download(filename)
-        context.bot.send_message(chat_id=update.message.chat_id,text='Receipt received!')
+#filename = '/Users/seanchan/Downloads/testreceipt.jpeg'
 
 '''
 ******MICROSOFT AZURE******
@@ -64,33 +41,6 @@ def image(update,context):
 _url = 'https://southeastasia.api.cognitive.microsoft.com/vision/v2.0/ocr?language=en&detectOrientation=true'
 _key = '4ca1a3b2c2e946f4af8c1d830ebe6eaa'
 _maxNumRetries = 10
-
-'''
-#Parameters: json object, image data object, subscription key and data type request, handwritten or printed text
-def processRequest(json,data,headers,params):
-        retries = 0
-        result = None
-
-        while True:
-                response = requests.request('post', _url, json=json, data=data, headers=headers, params = params)
-
-                if response.status_code == 429: #429 Too Many Requests
-                        pp.pprint("Message: %s" % (response.json() ) )
-                        if retries <= _maxNumRetries:
-                                time.sleep(1)
-                                retries += 1
-                                continue
-                        else:
-                                print("Error: failed after retrying!")
-                                break
-                elif response.status_code == 202: #202 Accepted
-                        result = response.headers['Operation-Location']
-                else: #Other status code
-                        print("Error code: %d" % (response.status_code) )
-                        pp.pprint("Message: %s" % (response.json()) )
-                break
-        return result
-'''
 
 def processRequest(json,data,headers,params):
         retries = 0
@@ -142,31 +92,81 @@ def getOCRTestResult(operationLocation, headers):
                 break
         return result
 
+
+'''
+******BOT FUNCTIONS*******
+'''
+
+#Bot functions
+'''
+def start(update,context):
+	context.bot.send_message(chat_id=update.message.chat_id,text="I'm a bot, please talk to me!")
+	
+def echo(update,context):
+	context.bot.send_message(chat_id=update.message.chat_id,text=update.message.text)
+
+def caps(update,context):
+	text_caps = ' '.join(args).upper()
+	context.bot.send_message(chat_id=update.message.chat_id,text=text_caps)
+'''
+
+
+def ocr(update,context):
+        context.bot.send_message(chat_id=update.message.chat_id,text='Processing receipt...')
+        photo_file = context.bot.get_file(update.message.photo[-1].file_id)
+        save_path = '/Users/seanchan/Documents/Orbital/'
+        #filename saved for use for Azure API later
+        filename = os.path.join(save_path,'{}.jpg'.format(photo_file.file_id))
+        photo_file.download(filename)
+        context.bot.send_message(chat_id=update.message.chat_id,text='Receipt received!')
+
+        #Load raw image file
+        if not os.path.exists(filename):
+                print('Error, file does not exist!')
+        else:
+                #Set parameters for REST API
+                f = open(filename,'rb')
+                data = f.read()
+                headers = {'Ocp-Apim-Subscription-Key':'4ca1a3b2c2e946f4af8c1d830ebe6eaa','Content-Type':'application/octet-stream'}
+                params = {'handwriting':'false'}
+                json = None
+
+                #Post request to Azure server
+                message = processRequest(json,data,headers,params)
+                print('Request processed!')
+                context.bot.send_message(chat_id=update.message.chat_id,text='Request processed!')
+
+                #Retrieve text
+
 '''
 MAIN FUNCTION
 '''
 
 def main():             
-        '''
+
         #Initialise the bot, updater and dispatcher
         updater = Updater(token="792177430:AAGEslM_BD3S7jDZa7kr1GHmaaBA5d2vJXI",use_context=True)
         dispatcher = updater.dispatcher
 
         #Adding handlers
+        '''
         start_handler = CommandHandler('start',start)
         echo_handler = MessageHandler(Filters.text,echo)
         caps_handler = CommandHandler('caps',caps,pass_args=True)
-        img_handler = MessageHandler(Filters.photo,image)
+        '''
+        ocr_handler = MessageHandler(Filters.photo,ocr)
 
+        '''
         dispatcher.add_handler(start_handler)
         dispatcher.add_handler(echo_handler)
         dispatcher.add_handler(caps_handler)
-        dispatcher.add_handler(img_handler)
+        '''
+        dispatcher.add_handler(ocr_handler)
 
         #Polling
         updater.start_polling()
         updater.idle()
-        '''
+        
         '''
         AZURE PROCESSING
 
@@ -178,7 +178,7 @@ def main():
         4. Request URL (URL to send image to process)
 
         '''
-
+        '''
         #Load raw image file
         if not os.path.exists(filename):
                 print('Error, file does not exist!')
@@ -194,9 +194,9 @@ def main():
                 #operationLocation = processRequest(json,data,headers,params)
                 message = processRequest(json,data,headers,params)
                 print('Request processed!')
-                #print(json.dumps(message, indent=4))
+                
 
-                '''
+                
                 #Get JSON object from Azure server
                 result = None
                 if (operationLocation != None):
@@ -210,9 +210,8 @@ def main():
                                 result = getOCRTextResult(operationLocation, headers)
                                 if result['status'] == 'Succeeded' or result['status'] == 'Failed':
                                         break
-                pp.pprint(result)
-                '''
-                '''
+                
+                
                 #Retrieve text (TO BE EDITED)
                 lines = result['recognitionResult']['lines']
                
@@ -226,7 +225,7 @@ def main():
                 #Identify name, qty and price
 
                 items.append({'name': name ,'qty': qty,'u_price': u_price})
-                '''                                  
+        '''                                
 
 if __name__ == '__main__':
         main()
