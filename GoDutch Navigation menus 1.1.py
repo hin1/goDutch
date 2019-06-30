@@ -1,5 +1,5 @@
-
 import logging
+import os
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InlineQueryResultArticle, InputTextMessageContent, ReplyKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters,InlineQueryHandler
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -21,7 +21,7 @@ def start(update, context):
     reply_markup = InlineKeyboardMarkup(keyboard)
    
     
-    pp.pprint(update.to_dict())
+    #pp.pprint(update.to_dict())
     update.message.reply_text('Welcome! \n''Please select an option: ',reply_markup=reply_markup)
    # update.message.reply_text('Welcome! \n''Please select an option: ',
      #                          reply_markup=ReplyKeyboardMarkup(keyboard), one_time_keyboard=True)
@@ -52,37 +52,37 @@ def button(update, context):
         context.bot.send_message(chat_id=query.message.chat_id, text="Please select a valid option")
         
 def picture(update,context):
-    #to define
-    return
+    #Send message 'Processing Receipt...'
+    context.bot.send_message(chat_id=update.message.chat_id,text='Processing receipt...')
+        #Retrieve the id of the photo with the largest size
+    photo_file = context.bot.get_file(update.message.photo[-1].file_id)
+        #Save path shows which directory to save photo to - EDIT ACCORDINGLY
+    save_path = '/Users/daniel/Downloads/Orbital'
+        #Create path with filename of photo
+    filename = os.path.join(save_path,'{}.jpg'.format(photo_file.file_id))
+        #Download photo to the specified file path
+    photo_file.download(filename)
+        #Send message to update user that receipt has been received
+    context.bot.send_message(chat_id=update.message.chat_id,text='Receipt received!')
+
 
 def manual(update,context):
-    import pprint
     List = [{}]
     counter = 1
     print("hello")
-    pp.pprint(update.to_dict())
-    
-    print("\n")
+    #pp.pprint(update.to_dict())
     #print(context)
-    
-
-    
     user = update.callback_query
-    #print(user)
-    #print("\n")
-    #print(user.data.first_name)
-   # pp = pprint.PrettyPrinter(indent=4, width=20)
-    #pp.print(user)
-    
+    #pp.pprint(user.to_dict()['from']['first_name'])   
     update.callback_query.edit_message_text("Please enter item no. " + str(counter)
                                 )
 
     
-    logger.info("Item of %s: %s", user.first_name, update.message.text)
-    List.append(update.message.text)
-    context.bot.send_message(chat_id=query.message.chat_id, text="Please enter item name")
-    logger.info("Price of %s: %s", user.first_name, update.message.text)
-    context.bot.send_message(chat_id=query.message.chat_id, text="Please enter item value")
+    #logger.info("Item of %s: %s", user.first_name, update.message.text)
+    #List.append(update.message.text)
+    #context.bot.send_message(chat_id=query.message.chat_id, text="Please enter item name")
+    #logger.info("Price of %s: %s", user.first_name, update.message.text)
+    #context.bot.send_message(chat_id=query.message.chat_id, text="Please enter item value")
     
 ######################### Commands ########################
 
@@ -123,12 +123,14 @@ def inline_caps(update, context):
 def main():
     # Create the Updater and pass it your bot's token.
     # Make sure to set use_context=True to use the new context based callbacks
-
+    # Post version 12 this will no longer be necessary
     updater = Updater("728096945:AAEqL7_eozmm_33rFT4QDc1y2V6c_PMlbKc", use_context=True)
     
     updater.dispatcher.add_handler(CommandHandler('start', start))
     updater.dispatcher.add_handler(CallbackQueryHandler(button))
     #updater.dispatcher.add_handler(CallbackQueryHandler(manual))
+
+    updater.dispatcher.add_handler(MessageHandler(Filters.photo,picture))
     
     updater.dispatcher.add_handler(CommandHandler('help', help))
     updater.dispatcher.add_error_handler(error)
