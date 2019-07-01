@@ -4,7 +4,11 @@ import json
 
 file = '/Users/seanchan/orbital/testreceipt_formatted.txt'
 
-def parse_into_lines(filename,threshold):
+def hello():
+    print('Hello World!')
+    
+
+def lineparse(filename,threshold):
 
     if (os.path.exists(filename)):
         with open(filename) as f:
@@ -48,14 +52,17 @@ def parse_into_lines(filename,threshold):
             
     else:
         print('File does not exist!')
-    
+
+'''
 
 def main():
-    message = parse_into_lines(file,15)
+    
+    message = linesparse(file,15)
+    
     
 
 if __name__ == '__main__':
     main()
         
-    
+'''    
     

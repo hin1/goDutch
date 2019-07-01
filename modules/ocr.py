@@ -98,7 +98,6 @@ def getOCRTestResult(operationLocation, headers):
 '''
 
 #Bot functions
-'''
 def start(update,context):
 	context.bot.send_message(chat_id=update.message.chat_id,text="I'm a bot, please talk to me!")
 	
@@ -108,8 +107,18 @@ def echo(update,context):
 def caps(update,context):
 	text_caps = ' '.join(args).upper()
 	context.bot.send_message(chat_id=update.message.chat_id,text=text_caps)
-'''
 
+'''
+AZURE PROCESSING
+
+Requirements for request:
+1. Request body (image format)
+2. Request parameters (dictionary with key 'handwriting')
+3. Request headers (dictionary with keys 'Content-Type' [tells string media type
+   of body sent to API] and 'Ocp-Apim-Subscription-Key' [Subscription key of Azure]
+4. Request URL (URL to send image to process)
+
+'''
 
 def ocr(update,context):
         context.bot.send_message(chat_id=update.message.chat_id,text='Processing receipt...')
@@ -136,7 +145,7 @@ def ocr(update,context):
                 print('Request processed!')
                 context.bot.send_message(chat_id=update.message.chat_id,text='Request processed!')
 
-                #Retrieve text
+                #Retrieve text, code extracted from regextest.py
 
 '''
 MAIN FUNCTION
@@ -165,67 +174,7 @@ def main():
 
         #Polling
         updater.start_polling()
-        updater.idle()
-        
-        '''
-        AZURE PROCESSING
-
-        Requirements for request:
-        1. Request body (image format)
-        2. Request parameters (dictionary with key 'handwriting')
-        3. Request headers (dictionary with keys 'Content-Type' [tells string media type
-           of body sent to API] and 'Ocp-Apim-Subscription-Key' [Subscription key of Azure]
-        4. Request URL (URL to send image to process)
-
-        '''
-        '''
-        #Load raw image file
-        if not os.path.exists(filename):
-                print('Error, file does not exist!')
-        else:
-                #Set parameters for REST API
-                f = open(filename,'rb')
-                data = f.read()
-                headers = {'Ocp-Apim-Subscription-Key':'4ca1a3b2c2e946f4af8c1d830ebe6eaa','Content-Type':'application/octet-stream'}
-                params = {'handwriting':'false'}
-                json = None
-
-                #Post request to Azure server
-                #operationLocation = processRequest(json,data,headers,params)
-                message = processRequest(json,data,headers,params)
-                print('Request processed!')
-                
-
-                
-                #Get JSON object from Azure server
-                result = None
-                if (operationLocation != None):
-                        #headers = {}
-                        #headers['Ocp-Apim-Subscription-Key'] = _key
-                        iteration = 0
-                        while True:
-                                time.sleep(1)
-                                iteration += 1
-                                print('Iteration: {}'.format(iteration))
-                                result = getOCRTextResult(operationLocation, headers)
-                                if result['status'] == 'Succeeded' or result['status'] == 'Failed':
-                                        break
-                
-                
-                #Retrieve text (TO BE EDITED)
-                lines = result['recognitionResult']['lines']
-               
-                items = []  #list of dictionaries
-                text = []
-                for i in range(len(lines)):
-                        words = lines[i]['words']
-                        for j in range(len(words)):
-                                text.append(words[j]['text']
-
-                #Identify name, qty and price
-
-                items.append({'name': name ,'qty': qty,'u_price': u_price})
-        '''                                
+        updater.idle()                               
 
 if __name__ == '__main__':
         main()
