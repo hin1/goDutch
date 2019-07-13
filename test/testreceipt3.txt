@@ -1,0 +1,584 @@
+{
+    "language": "en",
+    "textAngle": 0.0,
+    "orientation": "Up",
+    "regions": [
+        {
+            "boundingBox": "122,185,444,422",
+            "lines": [
+                {
+                    "boundingBox": "203,185,296,24",
+                    "words": [
+                        {
+                            "boundingBox": "203,185,124,23",
+                            "text": "McDonald's"
+                        },
+                        {
+                            "boundingBox": "342,187,95,22",
+                            "text": "Clementi"
+                        },
+                        {
+                            "boundingBox": "455,188,44,21",
+                            "text": "Mall"
+                        }
+                    ]
+                },
+                {
+                    "boundingBox": "202,214,325,25",
+                    "words": [
+                        {
+                            "boundingBox": "202,214,49,23",
+                            "text": "3155"
+                        },
+                        {
+                            "boundingBox": "266,216,149,23",
+                            "text": "Commonwealth"
+                        },
+                        {
+                            "boundingBox": "429,218,36,21",
+                            "text": "Ave"
+                        },
+                        {
+                            "boundingBox": "479,218,48,21",
+                            "text": "West"
+                        }
+                    ]
+                },
+                {
+                    "boundingBox": "189,246,339,26",
+                    "words": [
+                        {
+                            "boundingBox": "189,246,138,26",
+                            "text": "01-06/07/09"
+                        },
+                        {
+                            "boundingBox": "341,248,36,22",
+                            "text": "and"
+                        },
+                        {
+                            "boundingBox": "392,248,136,24",
+                            "text": "02-06/07/08"
+                        }
+                    ]
+                },
+                {
+                    "boundingBox": "176,275,390,28",
+                    "words": [
+                        {
+                            "boundingBox": "176,275,97,24",
+                            "text": "Clementi"
+                        },
+                        {
+                            "boundingBox": "291,277,57,26",
+                            "text": "Mall,"
+                        },
+                        {
+                            "boundingBox": "366,279,111,24",
+                            "text": "Singapore"
+                        },
+                        {
+                            "boundingBox": "494,279,72,21",
+                            "text": "129588"
+                        }
+                    ]
+                },
+                {
+                    "boundingBox": "278,308,174,23",
+                    "words": [
+                        {
+                            "boundingBox": "278,308,45,22",
+                            "text": "Tel:"
+                        },
+                        {
+                            "boundingBox": "341,309,48,22",
+                            "text": "6659"
+                        },
+                        {
+                            "boundingBox": "403,309,49,21",
+                            "text": "4360"
+                        }
+                    ]
+                },
+                {
+                    "boundingBox": "265,339,212,22",
+                    "words": [
+                        {
+                            "boundingBox": "265,339,111,22",
+                            "text": "Hanbaobao"
+                        },
+                        {
+                            "boundingBox": "391,340,36,21",
+                            "text": "Pte"
+                        },
+                        {
+                            "boundingBox": "442,339,35,22",
+                            "text": "Ltd"
+                        }
+                    ]
+                },
+                {
+                    "boundingBox": "214,369,314,22",
+                    "words": [
+                        {
+                            "boundingBox": "214,369,36,21",
+                            "text": "GST"
+                        },
+                        {
+                            "boundingBox": "265,370,48,21",
+                            "text": "REGN"
+                        },
+                        {
+                            "boundingBox": "328,370,32,21",
+                            "text": "NO:"
+                        },
+                        {
+                            "boundingBox": "378,370,150,21",
+                            "text": "M2-0023981-4"
+                        }
+                    ]
+                },
+                {
+                    "boundingBox": "302,400,137,21",
+                    "words": [
+                        {
+                            "boundingBox": "302,400,36,21",
+                            "text": "TAX"
+                        },
+                        {
+                            "boundingBox": "353,400,86,21",
+                            "text": "INVOICE"
+                        }
+                    ]
+                },
+                {
+                    "boundingBox": "226,459,289,25",
+                    "words": [
+                        {
+                            "boundingBox": "226,460,37,21",
+                            "text": "MFY"
+                        },
+                        {
+                            "boundingBox": "276,459,50,22",
+                            "text": "Side"
+                        },
+                        {
+                            "boundingBox": "341,460,7,22",
+                            "text": "1"
+                        },
+                        {
+                            "boundingBox": "364,459,12,25",
+                            "text": "/"
+                        },
+                        {
+                            "boundingBox": "390,459,100,22",
+                            "text": "DESSSide"
+                        },
+                        {
+                            "boundingBox": "503,460,12,21",
+                            "text": "S"
+                        }
+                    ]
+                },
+                {
+                    "boundingBox": "124,521,251,22",
+                    "words": [
+                        {
+                            "boundingBox": "124,521,48,22",
+                            "text": "INV#"
+                        },
+                        {
+                            "boundingBox": "187,521,188,22",
+                            "text": "001630200088309"
+                        }
+                    ]
+                },
+                {
+                    "boundingBox": "122,581,341,26",
+                    "words": [
+                        {
+                            "boundingBox": "122,583,37,21",
+                            "text": "ORD"
+                        },
+                        {
+                            "boundingBox": "225,582,49,22",
+                            "text": "-REG"
+                        },
+                        {
+                            "boundingBox": "338,581,125,26",
+                            "text": "29/06/2019"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "boundingBox": "121,613,327,330",
+            "lines": [
+                {
+                    "boundingBox": "122,613,100,23",
+                    "words": [
+                        {
+                            "boundingBox": "122,613,37,23",
+                            "text": "QTY"
+                        },
+                        {
+                            "boundingBox": "174,613,48,22",
+                            "text": "ITEM"
+                        }
+                    ]
+                },
+                {
+                    "boundingBox": "173,642,275,26",
+                    "words": [
+                        {
+                            "boundingBox": "173,643,100,25",
+                            "text": "BoxB(Nug"
+                        },
+                        {
+                            "boundingBox": "288,643,99,25",
+                            "text": "6pc+Wing"
+                        },
+                        {
+                            "boundingBox": "401,642,47,25",
+                            "text": "4pc)"
+                        }
+                    ]
+                },
+                {
+                    "boundingBox": "175,673,212,26",
+                    "words": [
+                        {
+                            "boundingBox": "175,675,6,21",
+                            "text": "1"
+                        },
+                        {
+                            "boundingBox": "198,675,62,24",
+                            "text": "Curry"
+                        },
+                        {
+                            "boundingBox": "274,674,62,22",
+                            "text": "Sauce"
+                        },
+                        {
+                            "boundingBox": "351,673,36,22",
+                            "text": "Tub"
+                        }
+                    ]
+                },
+                {
+                    "boundingBox": "149,704,187,25",
+                    "words": [
+                        {
+                            "boundingBox": "149,706,6,21",
+                            "text": "I"
+                        },
+                        {
+                            "boundingBox": "173,705,49,22",
+                            "text": "OREO"
+                        },
+                        {
+                            "boundingBox": "236,704,100,25",
+                            "text": "McFlurry"
+                        }
+                    ]
+                },
+                {
+                    "boundingBox": "121,765,98,25",
+                    "words": [
+                        {
+                            "boundingBox": "121,766,87,24",
+                            "text": "Subtota"
+                        },
+                        {
+                            "boundingBox": "213,765,6,23",
+                            "text": "1"
+                        }
+                    ]
+                },
+                {
+                    "boundingBox": "123,796,287,26",
+                    "words": [
+                        {
+                            "boundingBox": "123,798,73,22",
+                            "text": "Eat-in"
+                        },
+                        {
+                            "boundingBox": "211,797,58,22",
+                            "text": "Total"
+                        },
+                        {
+                            "boundingBox": "289,796,56,26",
+                            "text": "(incl"
+                        },
+                        {
+                            "boundingBox": "363,796,47,26",
+                            "text": "GST)"
+                        }
+                    ]
+                },
+                {
+                    "boundingBox": "121,827,164,24",
+                    "words": [
+                        {
+                            "boundingBox": "121,828,50,23",
+                            "text": "Cash"
+                        },
+                        {
+                            "boundingBox": "185,827,100,23",
+                            "text": "Tendered"
+                        }
+                    ]
+                },
+                {
+                    "boundingBox": "121,859,75,25",
+                    "words": [
+                        {
+                            "boundingBox": "121,859,75,25",
+                            "text": "Change"
+                        }
+                    ]
+                },
+                {
+                    "boundingBox": "121,920,265,23",
+                    "words": [
+                        {
+                            "boundingBox": "121,921,62,22",
+                            "text": "TOTAL"
+                        },
+                        {
+                            "boundingBox": "198,920,99,23",
+                            "text": "INCLUDES"
+                        },
+                        {
+                            "boundingBox": "312,920,36,22",
+                            "text": "GST"
+                        },
+                        {
+                            "boundingBox": "362,920,24,22",
+                            "text": "OF"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "boundingBox": "554,613,63,329",
+            "lines": [
+                {
+                    "boundingBox": "554,613,62,21",
+                    "words": [
+                        {
+                            "boundingBox": "554,613,62,21",
+                            "text": "TOTAL"
+                        }
+                    ]
+                },
+                {
+                    "boundingBox": "568,643,48,21",
+                    "words": [
+                        {
+                            "boundingBox": "568,643,48,21",
+                            "text": "7.35"
+                        }
+                    ]
+                },
+                {
+                    "boundingBox": "567,705,50,21",
+                    "words": [
+                        {
+                            "boundingBox": "567,705,50,21",
+                            "text": "2.70"
+                        }
+                    ]
+                },
+                {
+                    "boundingBox": "556,766,61,22",
+                    "words": [
+                        {
+                            "boundingBox": "556,766,61,22",
+                            "text": "10.05"
+                        }
+                    ]
+                },
+                {
+                    "boundingBox": "556,797,60,22",
+                    "words": [
+                        {
+                            "boundingBox": "556,797,60,22",
+                            "text": "10.05"
+                        }
+                    ]
+                },
+                {
+                    "boundingBox": "556,828,61,22",
+                    "words": [
+                        {
+                            "boundingBox": "556,828,61,22",
+                            "text": "10.05"
+                        }
+                    ]
+                },
+                {
+                    "boundingBox": "566,859,50,22",
+                    "words": [
+                        {
+                            "boundingBox": "566,859,50,22",
+                            "text": "0.00"
+                        }
+                    ]
+                },
+                {
+                    "boundingBox": "566,921,50,21",
+                    "words": [
+                        {
+                            "boundingBox": "566,921,50,21",
+                            "text": "0.66"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "boundingBox": "120,980,492,148",
+            "lines": [
+                {
+                    "boundingBox": "120,980,492,26",
+                    "words": [
+                        {
+                            "boundingBox": "120,984,24,22",
+                            "text": "We"
+                        },
+                        {
+                            "boundingBox": "158,982,63,24",
+                            "text": "would"
+                        },
+                        {
+                            "boundingBox": "237,981,47,24",
+                            "text": "like"
+                        },
+                        {
+                            "boundingBox": "299,981,23,22",
+                            "text": "to"
+                        },
+                        {
+                            "boundingBox": "337,980,49,23",
+                            "text": "know"
+                        },
+                        {
+                            "boundingBox": "400,980,37,23",
+                            "text": "how"
+                        },
+                        {
+                            "boundingBox": "451,987,24,16",
+                            "text": "we"
+                        },
+                        {
+                            "boundingBox": "489,986,37,17",
+                            "text": "are"
+                        },
+                        {
+                            "boundingBox": "540,980,72,26",
+                            "text": "doing."
+                        }
+                    ]
+                },
+                {
+                    "boundingBox": "197,1011,341,26",
+                    "words": [
+                        {
+                            "boundingBox": "197,1013,62,23",
+                            "text": "Share"
+                        },
+                        {
+                            "boundingBox": "273,1017,49,20",
+                            "text": "your"
+                        },
+                        {
+                            "boundingBox": "337,1011,99,23",
+                            "text": "feedback"
+                        },
+                        {
+                            "boundingBox": "451,1011,87,26",
+                            "text": "through"
+                        }
+                    ]
+                },
+                {
+                    "boundingBox": "312,1042,162,25",
+                    "words": [
+                        {
+                            "boundingBox": "312,1042,111,22",
+                            "text": "Feedback\""
+                        },
+                        {
+                            "boundingBox": "438,1043,36,24",
+                            "text": "App"
+                        }
+                    ]
+                },
+                {
+                    "boundingBox": "197,1072,337,26",
+                    "words": [
+                        {
+                            "boundingBox": "197,1073,36,23",
+                            "text": "and"
+                        },
+                        {
+                            "boundingBox": "248,1073,61,25",
+                            "text": "enjoy"
+                        },
+                        {
+                            "boundingBox": "324,1078,10,16",
+                            "text": "a"
+                        },
+                        {
+                            "boundingBox": "349,1073,74,22",
+                            "text": "treat*"
+                        },
+                        {
+                            "boundingBox": "438,1072,49,22",
+                            "text": "from"
+                        },
+                        {
+                            "boundingBox": "501,1078,33,17",
+                            "text": "us."
+                        }
+                    ]
+                },
+                {
+                    "boundingBox": "184,1103,366,25",
+                    "words": [
+                        {
+                            "boundingBox": "184,1103,62,23",
+                            "text": "Thank"
+                        },
+                        {
+                            "boundingBox": "261,1104,35,20",
+                            "text": "You"
+                        },
+                        {
+                            "boundingBox": "311,1103,36,22",
+                            "text": "and"
+                        },
+                        {
+                            "boundingBox": "361,1104,49,21",
+                            "text": "Have"
+                        },
+                        {
+                            "boundingBox": "425,1104,10,21",
+                            "text": "A"
+                        },
+                        {
+                            "boundingBox": "451,1103,48,22",
+                            "text": "Nice"
+                        },
+                        {
+                            "boundingBox": "513,1103,37,25",
+                            "text": "Day"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
