@@ -1,8 +1,12 @@
 import re
 import os
 import json
+import pprint
+from google.protobuf.json_format import MessageToJson
 
-file = '/Users/seanchan/goDutch/test/testreceipt3.txt'
+file = '/Users/seanchan/goDutch/test/testpic3-full_response.txt'
+
+'''MICROSOFT AZURE'''
 
 #Parse a text file in JSON format into a dictionary of keys as vertical coordinate of lines
 #and values as a list of the strings identified
@@ -97,19 +101,11 @@ def getStringList(filename,threshold):
     print(json.dumps(message,indent=4))
     return message
 
-def getItemPriceQty(message):
-
-    #Design regex
-    ipqRegex = re.compile(r'
-    
-    for line in message:
-        if 
-
 def main():
 
-    message3 = getStringList(file,15)
-    print(json.dumps(message3,sort_keys=True,indent=4))
-    
+    message = google_get_lines(file,10)
+    pp = pprint.PrettyPrinter()
+    pp.pprint(message)
 
 if __name__ == '__main__':
     main()
