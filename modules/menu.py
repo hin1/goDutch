@@ -1,49 +1,48 @@
 import logging
 import os
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InlineQueryResultArticle, InputTextMessageContent, ReplyKeyboardMarkup
-from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters,InlineQueryHandler
+#from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InlineQueryResultArticle, InputTextMessageContent, ReplyKeyboardMarkup
+#from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters,InlineQueryHandler, Dispatcher
+from telegram.ext import *
+from telegram import *
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 logger = logging.getLogger(__name__)
 ########## Pretty Print ###########
 import pprint
 pp = pprint.PrettyPrinter(indent=4,width=20)
+#pp.pprint(update.to_dict())
 
 updater = Updater("728096945:AAEqL7_eozmm_33rFT4QDc1y2V6c_PMlbKc", use_context=True)
 data = {} #dictionary of list of dictionaries (user_id:[item:price])
-counter = 1
+counter = 1 # to count the number of items in the dictionary later
 
 def start(update, context):
     keyboard = [
                 [InlineKeyboardButton("Send picture of receipt", callback_data='Pic' )],
                 [InlineKeyboardButton("Input manually", callback_data='Manual'),
-                InlineKeyboardButton("Help", callback_data='Help')],
-                #[InlineKeyboardButton("chat",callback_data='hello')]              
+                InlineKeyboardButton("Help", callback_data='Help')],              
                 ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     user_id = update._effective_chat.id
     data[user_id] = []
-    print(data[user_id])
-    
-    #pp.pprint(update.to_dict())
-    update.message.reply_text('Welcome! \n''Please select an option: ',reply_markup=reply_markup)
-    # update.message.reply_text('Welcome! \n''Please select an option: ',
-    #                          reply_markup=ReplyKeyboardMarkup(keyboard), one_time_keyboard=True)
+    update.message.bot.send_message(update.message.chat_id,'Welcome! \n''Please select an option: ',reply_markup=reply_markup)
+    # Second type of keyboard 
+    # update.message.reply_text('Welcome! \n''Please select an option: ',reply_markup=ReplyKeyboardMarkup(keyboard), one_time_keyboard=True)
     updater.dispatcher.add_handler(CallbackQueryHandler(button))
+    # Add a handler to listen for the response of the button press
     
 def button(update, context):
     query = update.callback_query
     #query.edit_message_text(text="Selected option: {} ".format(query.data))
     if query.data == 'Pic':
         query.edit_message_text("Selected option: {}\n".format(query.data) +
-                                'Please send a picture of your reciept:'
-                                )
+                                'Please send a picture of your reciept:')
         picture(update, context)
 
     elif query.data == 'Manual':
-        #query.edit_message_text("Selected option: {}\n".format(query.data) +
-        #                        "Manual input:",
-        #                        )
+        """query.edit_message_text("Selected option: {}\n".format(query.data) +
+                                "Manual input:",
+                                )"""
         manual(update, context)
         
     elif query.data == 'Help':
@@ -52,11 +51,10 @@ def button(update, context):
                                 ' '*5 + 'or\n' +
                                 '2. Key in the details manually \n\n' +
                                 'Enter /start again to restart')
-        #context.bot.send_message(chat_id=query.message.chat_id, text="Help is on the way")
     else:
         context.bot.send_message(chat_id=query.message.chat_id, text="Please select a valid option")
         
-def picture(update,context):
+"""def picture(update,context):
     updater.dispatcher.add_handler(MessageHandler(Filters.photo,picture))
     print('pic')
         #Send message 'Processing Receipt...'
@@ -71,70 +69,51 @@ def picture(update,context):
     photo_file.download(filename)
         #Send message to update user that receipt has been received
     context.bot.send_message(chat_id=update.message.chat_id,text='Receipt received!')
+    ### TO ADD : remove handler"""
 
-    ### TO ADD : remove handler 
-
-
-def manual(update,context,*entry):
-    #pp.pprint(update.to_dict())
+def manual(update,context):
     user_id = update._effective_chat.id
-    update.callback_query.edit_message_text("Please enter item no. " + str(counter)
-                                            )
-    
-    #updater.dispatcher.add_handler(MessageHandler(Filters.text, input_entries))  
+    update.callback_query.edit_message_text("Please enter item no. " + str(counter) )
+    #update._effective_message.edit_text('test')
+    #ForceReply(force_reply=True)
 
-    #user = update.callback_query
-    #pp.pprint(user.to_dict()['from']['first_name'])   
-    #pp.pprint(update.to_dict())
-    
-    #text_caps = ' '.join(context.args).upper()
-    #print(text_caps)
-    #context.bot.send_message(chat_id=update.message.chat_id, text=text_caps)
+    return ITEM
 
-    #query = update.message.text
-    #query = update.inline_query.query
-    """if not query:
-        return
-    results = list()
-    results.append(
-        InlineQueryResultArticle(
-            id=query.upper(),
-            title='Caps',
-            input_message_content=InputTextMessageContent(query.upper())
-        )
-    )
-    context.bot.answer_inline_query(update.inline_query.id, results)
-    
-    #logger.info("Item of %s: %s", user.first_name, update.message.text)
-    #List.append(update.message.text)
-    #context.bot.send_message(chat_id=query.message.chat_id, text="Please enter item name")
-    #logger.info("Price of %s: %s", user.first_name, update.message.text)
-    #context.bot.send_message(chat_id=query.message.chat_id, text="Please enter item value")"""
-def input_entries(update,context):
+def input_item(update,context):
     user_id = update._effective_chat.id
     #input_item()
     #input_price()
     
     item_name = update.message.text
     item = {}
-    #my_dict
+
+    return PRICE
+   
+def input_price(update,context,item):
+    user_id = update._effective_chat.id
     """insert reply text : please enter "entry" price"""
-    #pp.pprint(update.to_dict())
-    #print(entry)
-    
+    price = update.message.text
     item[item_name]=input_price(update,context)
     data[user_id].append(item)
     print(data[user_id])
-    
-def input_price(update,context):
-    print("input price")
-    price = 10
-    print(price)
-    return(price) 
-    
-    
-######################### Commands ########################
 
+    return MANUAL
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    
+### Commands 
 def help(update, context):
     update.message.reply_text("Use /start to test this bot.")
 
@@ -142,7 +121,7 @@ def error(update, context):
     """Log Errors caused by Updates."""
     logger.warning('Update "%s" caused error "%s"', update, context.error)
 
-########################## Extra Functions ###########################
+########################## Extra Functions ####################################################
 def test(update, context):
     context.bot.send_message(chat_id=update.message.chat_id, text="I'm a bot, please talk to me!")
 def wrong_command(update, context):
@@ -156,7 +135,7 @@ def caps(update, context):
     print(text_caps)
     context.bot.send_message(chat_id=update.message.chat_id, text=text_caps)
 
-########################## Inline Mode functions #####################
+### Inline Mode function 
 def inline_caps(update, context):
     pp.pprint(update.to_dict())
     print("hello")
@@ -174,25 +153,20 @@ def inline_caps(update, context):
     )
     context.bot.answer_inline_query(update.inline_query.id, results)
 
-############################## Extra Functions #######################
-
+############################## Extra Functions #################################################
 
 def main():
-    # Create the Updater and pass it your bot's token.
     # Make sure to set use_context=True to use the new context based callbacks
-    # Post version 12 this will no longer be necessary
-    
     updater.dispatcher.add_handler(CommandHandler('start', start))
     
-    #updater.dispatcher.add_handler(CallbackQueryHandler(manual))
-
    
-    
+#############   EXTRA FUNCTIONS     #################
     #updater.dispatcher.add_handler(MessageHandler(Filters.text, echo))
     updater.dispatcher.add_handler(CommandHandler('test', test))
     updater.dispatcher.add_handler(CommandHandler('caps', caps))
     updater.dispatcher.add_handler(InlineQueryHandler(inline_caps))
-
+#############   EXTRA FUNCTIONS     #################
+    
     # Help Command
     updater.dispatcher.add_handler(CommandHandler('help', help))
     # Wrong Command
