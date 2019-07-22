@@ -6,15 +6,14 @@ import os
 # Remember to transfer the key to server
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/seanchan/Documents/Orbital/goDutch/GoDutch-641ac56fc8a1.json"
 #Image file to process
-#file_name = "/Users/seanchan/goDutch/test/testpic3.jpg"
+#file_name = os.path.join( os.path.dirname(__file__), "test/testpic3.jpg")
 
 import argparse #Purely for testing
 from PIL import Image, ImageDraw
 from enum import Enum
 from google.cloud import vision
 from google.cloud.vision import types
-from google.protobuf.json_format import MessageToDict
-import pprint
+from google.protobuf.json_format import MessageToJson
 
 #Enumerations to denote type of information being detected
 class FeatureType(Enum):
@@ -23,33 +22,6 @@ class FeatureType(Enum):
     PARA = 3
     WORD = 4
     SYMBOL = 5
-
-def get_full_response_dict(file_name):
-    #Instantiate client
-    client = vision.ImageAnnotatorClient()
-
-    with open(file_name, "rb") as f:
-        img_content = f.read()
-
-    img = types.Image(content=img_content)
-
-    #Label detection
-    response = client.text_detection(image=img)
-    dict_response = MessageToDict(response,preserving_proto_field_name = True)
-    
-    texts = dict_response["text_annotations"]
-    full_text = dict_response["full_text_annotation"]
-    #texts = response.text_annotations
-    #full_text = response.full_text_annotation
-    
-    print("Text_annotation:")
-    print(texts)
-    #print("\n")
-    #print("Full_text_annotation:")
-    #print(full_text)
-
-    return texts
-    
 
 def get_basic_text(file_name):
     
@@ -76,7 +48,33 @@ def get_basic_text(file_name):
 
     return txt
 
-'''TESTING FUNCTIONS'''
+def get_full_response_dict(file_name):
+    #Instantiate client
+    client = vision.ImageAnnotatorClient()
+
+    with open(file_name, "rb") as f:
+        img_content = f.read()
+
+    img = types.Image(content=img_content)
+
+    #Label detection
+    response = client.text_detection(image=img)
+    dict_response = MessageToDict(response,preserving_proto_field_name = True)
+    
+    texts = dict_response["text_annotations"]
+    full_text = dict_response["full_text_annotation"]
+    #texts = response.text_annotations
+    #full_text = response.full_text_annotation
+    
+    print("Text_annotation:")
+    print(texts)
+    print("\n")
+    print("Full_text_annotation:")
+    print(full_text)
+
+    return full_text
+
+'''HELPER FUNCTIONS - not part of ocr module'''
 
 #Draws a border around the bounding box
 # image: The path to the image to draw boxes in
@@ -136,7 +134,7 @@ def get_document_bounds(image_file, feature):
     # The list `bounds` contains the coordinates of the bounding boxes.
     return bounds
 
-
+    
 def render_doc_text(filein, fileout):
     image = Image.open(filein)
     bounds = get_document_bounds(filein, FeatureType.PAGE)
@@ -154,7 +152,8 @@ def render_doc_text(filein, fileout):
 
 '''
 def main():
-    get_raw_txt(file_name)
+    get_full_response_dict(file_name)
+
 
 # Type into terminal: python3 google_ocr.py <image_file> [-out_file <save_file>]
 if __name__ == '__main__':
