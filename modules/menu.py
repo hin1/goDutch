@@ -1,9 +1,9 @@
 import logging
 import os
-#from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InlineQueryResultArticle, InputTextMessageContent, ReplyKeyboardMarkup
-#from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters,InlineQueryHandler, Dispatcher
 from telegram.ext import *
 from telegram import *
+
+########## Logger ##############
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -12,11 +12,14 @@ import pprint
 pp = pprint.PrettyPrinter(indent=4,width=20)
 #pp.pprint(update.to_dict())
 
-updater = Updater("728096945:AAEqL7_eozmm_33rFT4QDc1y2V6c_PMlbKc", use_context=True)
-data = {} #dictionary of list of dictionaries (user_id:[item:price])
-counter = 1 # to count the number of items in the dictionary later
+updater = Updater("token", use_context=True)
+bot = telegram.Bot(token = "token")
+
+data = {} #dictionary of dictionaries (user_id:item:price)
+ITEM, PRICE, MANUAL = range(3)
 
 def start(update, context):
+    pp.pprint(update.to_dict())
     keyboard = [
                 [InlineKeyboardButton("Send picture of receipt", callback_data='Pic' )],
                 [InlineKeyboardButton("Input manually", callback_data='Manual'),
@@ -24,7 +27,11 @@ def start(update, context):
                 ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     user_id = update._effective_chat.id
-    data[user_id] = []
+    data[user_id] = {}
+    data[user_id]['prev_input'] = -1
+    data[user_id]['item_list'] = {}
+    data[user_id]['item_counter'] = 0 # to count the number of items
+    
     update.message.bot.send_message(update.message.chat_id,'Welcome! \n''Please select an option: ',reply_markup=reply_markup)
     # Second type of keyboard 
     # update.message.reply_text('Welcome! \n''Please select an option: ',reply_markup=ReplyKeyboardMarkup(keyboard), one_time_keyboard=True)
@@ -32,6 +39,7 @@ def start(update, context):
     # Add a handler to listen for the response of the button press
     
 def button(update, context):
+    pp.pprint(update.to_dict())
     query = update.callback_query
     #query.edit_message_text(text="Selected option: {} ".format(query.data))
     if query.data == 'Pic':
@@ -44,6 +52,7 @@ def button(update, context):
                                 "Manual input:",
                                 )"""
         manual(update, context)
+        
         
     elif query.data == 'Help':
         query.edit_message_text('Please choose either to: \n' +
@@ -71,42 +80,121 @@ def button(update, context):
     context.bot.send_message(chat_id=update.message.chat_id,text='Receipt received!')
     ### TO ADD : remove handler"""
 
-def manual(update,context):
+def cancel(update,context):
+    user = update.message.from_user
+    logger.info("User %s canceled the conversation.", user.first_name)
+    update.message.reply_text('Cancelled. Please press /start to start again',
+                              reply_markup=ReplyKeyboardRemove())
+
+    return ConversationHandler.END
+
+def print_items(update,context):
     user_id = update._effective_chat.id
-    update.callback_query.edit_message_text("Please enter item no. " + str(counter) )
+    for key, val in data[user_id]['item_list'].items() :
+        print (key + ":" + val)  
+                                            
+            
+
+def manual(update,context):
+    #pp.pprint(update.to_dict())
+
+    user_id = update._effective_chat.id
+#    if "callback_query" in update:
+
+    update.callback_query.edit_message_text("Please enter item number " +
+                                            #str(data[user_id]['item_counter']+1) +
+                                            str(int(len(data[user_id]['item_list'])+1)) +
+                                            '\n' +
+                                            "Items so far : \n" 
+                                            #str(print_items(update,context))
+                                            )
+    """   else:
+        update.message.reply_text(update.message.chat_id,
+                                    "Please enter item number " +
+                                            #str(data[user_id]['item_counter']+1) +
+                                            str(int(len(data[user_id]['item_list'])+1)) +
+                                            '\n' +
+                                            "Items so far : \n" 
+                                    )"""
+                                        
     #update._effective_message.edit_text('test')
     #ForceReply(force_reply=True)
+    print("\n manual \n" )
+    #input_item(update,context)
+    """EXP"""
+    data[user_id]['bot_context'] = context
+    data[user_id]['bot_update'] = update
 
+    
+    print(data)
+    updater.dispatcher.add_handler(manual_input_items)
+    
     return ITEM
 
 def input_item(update,context):
+    #pp.pprint(update.to_dict())
     user_id = update._effective_chat.id
-    #input_item()
-    #input_price()
-    
     item_name = update.message.text
-    item = {}
+    
+    data[user_id]['item_list'][item_name] = 0
+    data[user_id]['item_counter'] += 1
 
+    print("\n item is " + item_name)
+    data[user_id]['prev_input'] = update.message.text
+    print("\n")
+    print(data[user_id])
     return PRICE
    
-def input_price(update,context,item):
+def input_price(update,context):
+    #pp.pprint(update.to_dict())
     user_id = update._effective_chat.id
     """insert reply text : please enter "entry" price"""
     price = update.message.text
-    item[item_name]=input_price(update,context)
-    data[user_id].append(item)
+    item_name = data[user_id]['prev_input']
+  
+    print("\n price is " + price)
+    data[user_id]['item_list'][item_name]=price
+    
+    data[user_id]['prev_input'] = update.message.text
+    print('\n')
     print(data[user_id])
+    #ConversationHandler.END
+    #print("\n ended")
+    manual(data[user_id]['bot_update'],data[user_id]['bot_context'])
+    return ITEM
 
-    return MANUAL
+manual_input_items = ConversationHandler(
+    entry_points = [MessageHandler(Filters.text, input_item)], ### Bug is here 
+    states = {
+        
+        MANUAL : [MessageHandler(Filters.text, manual)],
+        ITEM : [MessageHandler(Filters.text, input_item)],
+        PRICE : [MessageHandler(Filters.text, input_price)]
+        },
+    fallbacks = [CommandHandler('cancel', cancel)]
+    )
+
+def sum_all(dic):
+    total = 0
+    for price in dic.values():
+        total += price
+    return total
+
+my_dict = {'a':1, 'b':1, 'c':1}
+
+def split_even(update,context):
+    user_id = update._effective_chat.id
+    #total_sum = sum_all(data[user_id]['item_list'])
+    total_sum = sum_all(my_dict)
+    #take in number of people
+    bot.send_message(chat_id=update.message.chat_id, 
+                 text="*bold* _italic_ `fixed width font`(How many people are there?).", 
+                 parse_mode=telegram.ParseMode.MARKDOWN)
 
 
-
-
-
-
-
-
-
+    #output total_sum / number of people 
+    
+    #SEND a message
 
 
 
@@ -156,10 +244,11 @@ def inline_caps(update, context):
 ############################## Extra Functions #################################################
 
 def main():
+    print(bot.getMe())
     # Make sure to set use_context=True to use the new context based callbacks
     updater.dispatcher.add_handler(CommandHandler('start', start))
     
-   
+    updater.dispatcher.add_handler(CommandHandler('split', split_even))
 #############   EXTRA FUNCTIONS     #################
     #updater.dispatcher.add_handler(MessageHandler(Filters.text, echo))
     updater.dispatcher.add_handler(CommandHandler('test', test))
@@ -170,7 +259,8 @@ def main():
     # Help Command
     updater.dispatcher.add_handler(CommandHandler('help', help))
     # Wrong Command
-    updater.dispatcher.add_handler(MessageHandler(Filters.command, wrong_command))
+    #updater.dispatcher.add_handler(MessageHandler(Filters.command, wrong_command)
+                                
     # Log errors
     updater.dispatcher.add_error_handler(error)
     # Start Bot
