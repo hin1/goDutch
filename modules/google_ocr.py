@@ -42,8 +42,8 @@ def get_full_response_dict(file_name):
     #texts = response.text_annotations
     #full_text = response.full_text_annotation
     
-    print("Text_annotation:")
-    print(texts)
+    #print("Text_annotation:")
+    #print(texts)
     #print("\n")
     #print("Full_text_annotation:")
     #print(full_text)
