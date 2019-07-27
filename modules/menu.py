@@ -2,9 +2,9 @@ import logging
 import os
 from telegram.ext import *
 from telegram import *
-from BOT_TOKEN import TOKEN
-import google_ocr as ocr
-import google_regex as regex
+from modules.BOT_TOKEN import TOKEN
+import modules.google_ocr as ocr
+import modules.google_regex as regex
 ### Logger
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
