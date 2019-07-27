@@ -2,14 +2,19 @@ import modules.google_regex as regex
 import modules.google_ocr as ocr
 import pprint
 import modules.menu as menu
-from modules.BOT_TOKEN import TOKEN
+#from modules.BOT_TOKEN import TOKEN
 import os
+
+TOKEN = "TOKEN"
+PORT = int(os.environ.get('PORT', '8443'))
+updater = menu.Updater(TOKEN)
+# add handlers
 
 
 print(menu.TOKEN)
-pp = pprint.PrettyPrinter()
+#pp = pprint.PrettyPrinter()
 
-updater = menu.Updater(menu.TOKEN, use_context=True)
+#updater = menu.Updater(menu.TOKEN, use_context=True)
 bot = menu.Bot(token = menu.TOKEN)
 
 #def main():
@@ -38,10 +43,19 @@ def main():
     # Log errors
     menu.updater.dispatcher.add_error_handler(menu.error)
     # Start Bot
-    menu.updater.start_polling()
+   # menu.updater.start_polling()
     # Run the bot until the user presses Ctrl-C or the process receives SIGINT,
     # SIGTERM or SIGABRT
     # updater.idle()
 """to comment in later ^"""
+
+
+    updater.start_webhook(listen="0.0.0.0",
+                      port=PORT,
+                      url_path=TOKEN)
+    updater.bot.set_webhook("https://desolate-basin-70071.herokuapp.com/" + TOKEN)
+    updater.idle()
+
+
 if __name__ == '__main__':
     main()
