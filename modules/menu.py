@@ -12,8 +12,8 @@ logger = logging.getLogger(__name__)
 import pprint
 pp = pprint.PrettyPrinter(indent=4,width=20)
 #pp.pprint(update.to_dict())
-updater = Updater(TOKEN, use_context=True)
-bot = Bot(token = TOKEN)
+#updater = Updater(TOKEN, use_context=True)
+#bot = Bot(token = TOKEN)
 data = {}                                                                       # Dictionary of dictionaries (user_id:item:price)
 ITEM, PRICE, MANUAL, SPLITEVEN, NAMES, DUTCH, PIC = range(7)                       # For convo handler for manual input of items
 
