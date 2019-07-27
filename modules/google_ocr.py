@@ -24,6 +24,16 @@ class FeatureType(Enum):
     WORD = 4
     SYMBOL = 5
 
+def save_dict(file, dictionary):
+    
+    split_file = os.path.splitext(file)
+    new_name = split_file[0] + "-full_response.txt"
+    
+    new_file = open(new_name,'w+')
+    new_file.write(str(dictionary))
+    new_file.close()
+    print("File saved: " + new_name)
+
 def get_full_response_dict(file_name):
     #Instantiate client
     client = vision.ImageAnnotatorClient()
@@ -41,6 +51,8 @@ def get_full_response_dict(file_name):
     full_text = dict_response["full_text_annotation"]
     #texts = response.text_annotations
     #full_text = response.full_text_annotation
+
+    save_dict(file_name,dict_response)
     
     #print("Text_annotation:")
     #print(texts)

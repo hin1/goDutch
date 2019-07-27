@@ -6,8 +6,11 @@ from google.protobuf.json_format import MessageToJson
 import ast
 import operator
 
-#file = '/Users/seanchan/goDutch/test/testpic3-full_response.txt' #MACS
-file = '/Users/seanchan/goDutch/test/testpic4-text_annotation.txt' #BURGER KING    
+pp = pprint.PrettyPrinter()
+
+file = '/Users/seanchan/goDutch/test/testpic1-full_response.txt' #MACS
+#file = '/Users/seanchan/goDutch/test/testpic2-text_annotation.txt' #BURGER KING
+#file = '/Users/seanchan/goDutch/test/testpic3-full_response.txt' #SABOTEN
 
 formatRegex = re.compile(r'(desc(ription)?|item|name|am(oun)?t|q(uanti)?ty|price|total){1,4}',re.IGNORECASE)
 format2Regex = re.compile(r'''
@@ -20,11 +23,11 @@ format2Regex = re.compile(r'''
                             ''',re.IGNORECASE|re.VERBOSE) #USE FINDALL FOR THIS
 
 aboveItemRegex = re.compile(r'''
-                            (cashier|gst|table|bill|to\ go|take\ away|tel|fax|inv(oice)?|tax|receipt|check)|
+                            (cashier|gst|table|bill|to\ go|take\ away|dine\ in|tel|fax|inv(oice)?|tax|receipt|check|print|sgd)|
                             (\d\d:\d\d(:\d\d)?)|
                             (\d\d(/|-)\d\d(/|-)\d\d(\d\d)?)
                             ''',re.IGNORECASE|re.VERBOSE)
-belowItemRegex = re.compile(r'(item|to?ta?l|change|cash|gst|amount|service|tot)',re.IGNORECASE)
+belowItemRegex = re.compile(r'(item|to?ta?l|change|cash|gst|amount|service|tot|rounding|ch(ar)?ge?)',re.IGNORECASE)
 
 itemformatRegex = re.compile(r'(desc(ription)?|item|name)',re.IGNORECASE)
 priceformatRegex = re.compile(r'(price|am(oun)?t)',re.IGNORECASE)
@@ -36,20 +39,50 @@ priceRegex = re.compile(r'''(
                         (\d|B|O)+
                         \.
                         (\d|B|O){2}
+                        $
                         )''',re.VERBOSE)
 
+discountPriceRegex = re.compile(r'''
+                        (
+                        disc(ount)?
+                        (\.|:)?
+                        \s
+                        )
+
+                        .*?
+                        
+                        (
+                        (
+                        -
+                        (\d|B|O)+
+                        \.
+                        (\d|B|O){2}
+                        $
+                        )|
+
+                        (
+                        (\d|B|O)+
+                        \.
+                        (\d|B|O){2}
+                        -
+                        $
+                        )
+                        )
+                        ''',re.VERBOSE)
+
+#Accounted cases: " x 1", "1 x ", " 1.00 ",
 qtyRegex = re.compile(r'''
                     (
                     \s
-                    (x|\*)
+                    (x|X|\*)
                     \s?
                     (\d|B|O)+
                     )|
                     
                     (
-                    (\d|B|O)+
+                    ^(\d|B|O)+
                     \s?
-                    (x|\*)
+                    (x|X|\*)?
                     \s
                     )|
 
@@ -60,9 +93,10 @@ qtyRegex = re.compile(r'''
                     \s
                     )
                     ''',re.VERBOSE)
+
 gstRegex = re.compile(r'(gst|tax|vat):?\ ',re.IGNORECASE)
 servicechargeRegex = re.compile(r'(s(er)?vi?ce? ch(ar)?ge?)|(s(\.|\ )?c(\.|\ )?:?\ )',re.IGNORECASE)
-inclusiveRegex = re.compile(r'incl?(usive|uding|ude)?(:|\.)?\ ',re.IGNORECASE)
+inclusiveRegex = re.compile(r'incl?(usive|uding|udes?)?(:|\.)?\ ',re.IGNORECASE)
 
 numRegex = re.compile(r'^(\d|B|O)+$')
                    
@@ -78,6 +112,32 @@ def is_price(number_coord, page_left, page_right, proportion_threshold):
         return True
     else:
         return False
+
+def get_raw_annotation(response,threshold):
+    
+    receipt = response[1:] #Take away the first element, which is the entire string
+
+    message = {} #Each line is a key y-coord and value of list of words
+
+    # bounding_poly order is: top left, top right, bottom right, bottom left
+    
+    for word in receipt:
+        vertices = word["bounding_poly"]["vertices"]
+        avg_word_coord = (int(vertices[3]["y"]) + int(vertices[0]["y"]))/2
+
+        is_new_line = True
+        #Loop through keys in message which are the vertical coordinates
+        for line_coord in message:
+            if (abs(line_coord - avg_word_coord) < threshold):
+                message[line_coord] += " "
+                message[line_coord] += word["description"]
+                is_new_line = False
+                break
+
+        if (is_new_line):
+            message[avg_word_coord] = word["description"]
+
+    return message
 
 def fget_raw_annotation(filename,threshold):
     
@@ -108,19 +168,23 @@ def fget_raw_annotation(filename,threshold):
 
     return receipt, page_left, page_right
 
-def get_price_lines(receipt, threshold, page_left, page_right):
+def get_words(receipt,threshold):
     
     # bounding_poly order is: top left, top right, bottom right, bottom left
     words = []
-    message = []
-    price_lines = []
     
     for element in receipt:
         vertices = element["bounding_poly"]["vertices"]
+        '''
         avg_y_coord = (vertices[3]["y"] + vertices[0]["y"])/2
         avg_x_coord = (vertices[3]["x"] + vertices[0]["x"])/2
         # each word represented as vertical, horizontal, then content
         words.append([avg_y_coord,avg_x_coord, element["description"]])
+        '''
+        avg_y_coord = (vertices[3]["y"] + vertices[0]["y"])/2
+        left_x_coord = vertices[0]["x"]
+        # each word represented as vertical, horizontal, then content
+        words.append([avg_y_coord,left_x_coord, element["description"]])
 
     words = sorted(words)
     
@@ -134,6 +198,15 @@ def get_price_lines(receipt, threshold, page_left, page_right):
             
     words = sorted(words,key=operator.itemgetter(0,1))
 
+    return words
+    
+
+def get_message_and_price_lines(words, page_left, page_right):
+    
+    message = []
+    price_lines = []
+    indent = [words[0][1]]
+
     #Get message as list of lines
     prev_line = words[0][0]
     line = ""
@@ -144,6 +217,7 @@ def get_price_lines(receipt, threshold, page_left, page_right):
         else:
             message.append(line)
             line = word[2]
+            indent.append(word[1])
             
         prev_line = word[0]
 
@@ -157,16 +231,21 @@ def get_price_lines(receipt, threshold, page_left, page_right):
         if (is_price(word[1],page_left,page_right,0.6) and match_price and (len(message) not in price_lines)):
             price_lines.append(len(message))
 
-    return message, price_lines
+    return indent, message, price_lines
 
-def setup_regex(price_lines,message):
+#def get_alignment(price_lines,indent):
+    
+
+def setup_regex(indent,price_lines,message):
     
     #Find top line and order
     order = []
     
     for line_num1 in range(price_lines[0]-1,0,-1):
-        order = formatRegex.findall(message[line_num1])
+        #CHANGE
+        order = format2Regex.findall(message[line_num1])
         if order:
+            
             price_lines.insert(0,line_num1)
             break
             
@@ -181,6 +260,9 @@ def setup_regex(price_lines,message):
     if (order == []):
         order = ['quantity','price']
     else:
+        for i in range(len(order)):
+            order[i] = order[i].lower()
+            
         if (('price' and ('amt' or 'amount')) in order):
                 try:
                     order[order.index('amount')] = 'total'
@@ -208,10 +290,49 @@ def setup_regex(price_lines,message):
         align = 0
     else:
         #Check if price line is right after top line
-        if (price_lines[1] == price_lines[0] + 1): #Potential major bug
+        '''
+        Potential major bug:
+        1. What if single line first then second item is bottom align? NOT top align
+        2. Even if check bottom line, what if both first and last item are both single line?
+        '''
+        '''
+        for k in range(len(price_lines)-1):
+            _prev = price_lines[k]
+            _next = price_lines[k+1]
+            if (_next == _prev + 1):
+                #single_line
+                continue
+            else:
+                align = -1
+                break
+
+        if align == 0:
             align = 1
+                
+        '''
+        
+        if (price_lines[1] == (price_lines[0] + 1)):
+            
+            if (price_lines[-1] == (price_lines[-2] + 1)):
+                
+                for i in range(price_lines[1],price_lines[-2]):
+                    print("Checking lines: ")
+                    print("prev: " + message[i])
+                    print("next: " + message[i+1])
+                    _prev = i
+                    _next = i+1
+                    if (indent[_next] - indent[_prev] > 15):
+                        align = 1
+                    else:
+                        align = -1
+                #align = 2
+                #both first and last item single line
+                #Check if indentment is off
+            else:
+                align = 1
         else:
             align = -1
+        
 
     return align,order,price_lines
 
@@ -228,13 +349,16 @@ def get_item_price(align,order,price_lines,message):
     #Single line
     if align == 0:
         for i in range(1, len(price_lines)-1):
+            
             line = message[price_lines[i]]
+            price = 0.0
+            quantity = 1
+            item = ""
+            print("Line " + str(price_lines[i]) + ":\n")
+            
             for element in order:
+                print(line)
 
-                price = 0.0
-                quantity = 1
-                item = ""
-                
                 if priceformatRegex.search(element):
                     price_match = priceRegex.search(line)
                     price = price_match.group(0)
@@ -258,6 +382,10 @@ def get_item_price(align,order,price_lines,message):
                     
                 elif itemformatRegex.search(element):
                     item = line
+        
+            print("\nprice: " + str(price))
+            print("item: " + item)
+            print("quantity: " + str(quantity) + "\n")
 
             #Numbering duplicate items
             dup_start_num = 0
@@ -271,6 +399,8 @@ def get_item_price(align,order,price_lines,message):
                     else:
                         dup_start_num = int(dup_match.group(2))
                         break
+
+            print("dup_start_num = " + str(dup_start_num) + "\n")
 
             for each in range(quantity):
                 copy_num = dup_start_num + each
@@ -287,6 +417,7 @@ def get_item_price(align,order,price_lines,message):
             price = 0.0
             quantity = 1
             item = ""
+            print("Line " + str(price_lines[i]) + ":\n")
 
             for j in range(price_lines[i],price_lines[i+1]):
 
@@ -295,6 +426,9 @@ def get_item_price(align,order,price_lines,message):
                 dup_order = order.copy() #Create duplicate order
         
                 for element in orig_order:
+                    print(line)
+                    print("orig_order: ")
+                    print(orig_order)
                     
                     if priceformatRegex.search(element):
                         price_match = priceRegex.search(line)
@@ -324,6 +458,10 @@ def get_item_price(align,order,price_lines,message):
                         item = item + " " + line
 
                     orig_order = dup_order
+
+            print("\nprice: " + str(price))
+            print("item: " + item)
+            print("quantity: " + str(quantity) + "\n")
                     
             dup_start_num = 0
             for entry in data:
@@ -336,7 +474,9 @@ def get_item_price(align,order,price_lines,message):
                     else:
                         dup_start_num = int(dup_match.group(2))
                         break
-
+            
+            print("dup_start_num = " + str(dup_start_num) + "\n")
+            
             for each in range(quantity):
                 copy_num = dup_start_num + each
                 if (copy_num == 0):
@@ -356,6 +496,7 @@ def get_item_price(align,order,price_lines,message):
             price = 0.0
             quantity = 1
             item = ""
+            print("Line " + str(price_lines[i]) + ":\n")
 
             #Evaluate single item
             #From line right after price line to the next price line
@@ -370,7 +511,9 @@ def get_item_price(align,order,price_lines,message):
 
                 for element in orig_order:
 
-                    #print(line)
+                    print(line)
+                    print("orig_order: ")
+                    print(orig_order)
                     
                     if priceformatRegex.search(element):
                         price_match = priceRegex.search(line)
@@ -405,6 +548,10 @@ def get_item_price(align,order,price_lines,message):
                         print("Invalid format for " + element)
 
                     orig_order = dup_order
+
+            print("\nprice: " + str(price))
+            print("item: " + item)
+            print("quantity: " + str(quantity) + "\n")
                 
             dup_start_num = 0
             for entry in data:
@@ -418,14 +565,19 @@ def get_item_price(align,order,price_lines,message):
                         dup_start_num = int(dup_match.group(2))
                         break
 
+            print("dup_start_num = " + str(dup_start_num) + "\n")
+                        
             for each in range(quantity):
                 copy_num = dup_start_num + each
                 if (copy_num == 0):
                     data[item] = price
                 else:
                     data[item + " ~" + str(copy_num)] = price
+    else:
 
-        return data
+        print("Invalid alignment.")
+            
+    return data
 
 def get_misc(price_lines,message,data):
 
@@ -452,24 +604,60 @@ def get_misc(price_lines,message,data):
             
     return data
 
+def clean_up(data):
+    
+    for item in list(data):
+        if data[item] == 0.0:
+            del data[item]
+
+    return data
+
 def fcombined_parse_and_regex(filename,threshold):
 
     '''EXTRACT TEXT ANNOTATION FROM RESPONSE'''
-
     receipt, page_left, page_right = fget_raw_annotation(filename,threshold)
+    #print("Raw annotation: ")
+    #pp.print(receipt)
+    #print("\n")
 
     '''GET LINES OF RECEIPT'''
-    
-    message, price_lines = get_price_lines(receipt, threshold, page_left, page_right)
+
+    words = get_words(receipt,threshold)
+    indent, message, price_lines = get_message_and_price_lines(words, page_left, page_right)
+    print("Message: ")
+    pp.pprint(message)
+    print("\n")
+    print("Indent: ")
+    print(indent)
+
+    print("Indent to line:")
+    for i in range(len(message)):
+        print (str(indent[i]) + " " + message[i])
     
     '''SETUP REGEX'''
     
-    align, order, price_lines = setup_regex(price_lines,message)
+    align, order, price_lines = setup_regex(indent, price_lines,message)
+    
+    alignment = "Not set"
+    if (align == 0):
+        alignment = "Single line"
+    elif (align == -1):
+        alignment = "Bottom"
+    elif (align == 1):
+        alignment = "Top"
+
+    print("Order: ")
+    print(order)
+    print("Align: " + alignment)
+    print("Price lines with top and bottom line: ")
+    print(price_lines)
+    print("\n")
 
     '''REGEX'''
 
     data = get_item_price(align,order,price_lines,message)
     data = get_misc(price_lines,message,data)
+    data = clean_up(data)
 
     return data
 
@@ -482,159 +670,49 @@ def combined_parse_and_regex(response,threshold):
     receipt = response[1:]
 
     '''GET LINES OF RECEIPT'''
-    
-    message, price_lines = get_price_lines(receipt, threshold, page_left, page_right)
+
+    words = get_words(receipt,threshold)
+    indent, message, price_lines = get_message_and_price_lines(words, page_left, page_right)
+
+    print("Message: ")
+    pp.pprint(message)
+    print("\n")
+    print("Indent: ")
+    print(indent)
     
     '''SETUP REGEX'''
     
-    align, order, price_lines = setup_regex(price_lines,message)
+    align, order, price_lines = setup_regex(indent, price_lines,message)
+
+    alignment = "Not set"
+    if (align == 0):
+        alignment = "Single line"
+    elif (align == -1):
+        alignment = "Bottom"
+    elif (align == 1):
+        alignment = "Top"
+
+    print("Order: ")
+    print(order)
+    print("Align: " + alignment)
+    print("Price lines with top and bottom line: ")
+    print(price_lines)
+    print("\n")
 
     '''REGEX'''
 
     data = get_item_price(align,order,price_lines,message)
     data = get_misc(price_lines,message,data)
+    data = clean_up(data)
 
     return data
-      
 
 
-
-
-
-
-
-#For files
-def fget_vert_coord_to_lines(filename,threshold):
-
-    pp = pprint.PrettyPrinter()
-    
-    if (os.path.exists(filename)):
-        with open(filename) as f:
-             response = f.read()
-
-        response = ast.literal_eval(response)
-
-        #Find overall page bounds
-        page_left = 0
-        page_right = 0
-
-        #Check file type and extract relevant information
-        filetype = filename.split('-')[-1]
-        if (filetype == "text_annotation.txt"):
-            page_left = response[0]["bounding_poly"]["vertices"][0]["x"]
-            page_right = response[0]["bounding_poly"]["vertices"][1]["x"]
-            receipt = response[1:] #Take away the first element, which is the entire string
-        elif (filetype == "full_response.txt"):
-            receipt = response["text_annotations"]
-            page_left = receipt[0]["bounding_poly"]["vertices"][0]["x"]
-            page_right = receipt[0]["bounding_poly"]["vertices"][1]["x"]
-            receipt = receipt[1:] #Take away the first element, which is the entire string
-
-        # bounding_poly order is: top left, top right, bottom right, bottom left
-        words = []
-        for element in receipt:
-            vertices = element["bounding_poly"]["vertices"]
-            avg_y_coord = (vertices[3]["y"] + vertices[0]["y"])/2
-            avg_x_coord = (vertices[3]["x"] + vertices[0]["x"])/2
-            # each word represented as vertical, horizontal, then content
-            words.append([avg_y_coord,avg_x_coord, element["description"]])
-
-        words = sorted(words)
-        
-        #Align vert coords of words on the same line
-        prev_line = words[0][0] #y-coord of first word
-        for word in words:
-            if ((word[0] - prev_line) < threshold):
-                word[0] = prev_line
-            else:
-                prev_line = word[0]
-        words = sorted(words,key=operator.itemgetter(0,1))
-        
-        message = []
-
-        prev_line = words[0][0]
-        line = ""
-        for word in words:
-            if (word[0] == prev_line):
-                line += " "
-                line += word[2]
-            else:
-                message.append(line)
-                line = word[2]
-            prev_line = word[0]
-
-        return message
-    '''    
-    else:
-        print("File does not exist.")
-    '''
-
-#TO CHANGE
-def get_vert_coord_to_lines(response,threshold):
-    
-    receipt = response[1:] #Take away the first element, which is the entire string
-
-    message = {} #Each line is a key y-coord and value of list of words
-
-    # bounding_poly order is: top left, top right, bottom right, bottom left
-    
-    for word in receipt:
-        vertices = word["bounding_poly"]["vertices"]
-        avg_word_coord = (int(vertices[3]["y"]) + int(vertices[0]["y"]))/2
-
-        is_new_line = True
-        #Loop through keys in message which are the vertical coordinates
-        for line_coord in message:
-            if (abs(line_coord - avg_word_coord) < threshold):
-                message[line_coord] += " "
-                message[line_coord] += word["description"]
-                is_new_line = False
-                break
-
-        if (is_new_line):
-            message[avg_word_coord] = word["description"]
-
-    return message
-
-def get_raw_annotation(response,threshold):
-    
-    receipt = response[1:] #Take away the first element, which is the entire string
-
-    message = {} #Each line is a key y-coord and value of list of words
-
-    # bounding_poly order is: top left, top right, bottom right, bottom left
-    
-    for word in receipt:
-        vertices = word["bounding_poly"]["vertices"]
-        avg_word_coord = (int(vertices[3]["y"]) + int(vertices[0]["y"]))/2
-
-        is_new_line = True
-        #Loop through keys in message which are the vertical coordinates
-        for line_coord in message:
-            if (abs(line_coord - avg_word_coord) < threshold):
-                message[line_coord] += " "
-                message[line_coord] += word["description"]
-                is_new_line = False
-                break
-
-        if (is_new_line):
-            message[avg_word_coord] = word["description"]
-
-    return message
-
-
-'''
 def main():
 
-    pp = pprint.PrettyPrinter()
-
-    #message = fget_vert_coord_to_lines(file,15)
-    #message = get_lines(file,10)
     message = fcombined_parse_and_regex(file,15)
     pp.pprint(message)
-    #data = get_item_price_dict(message)
-    #pp.pprint(data)
 
 if __name__ == '__main__':
     main()
-'''
+
