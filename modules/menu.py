@@ -2,7 +2,9 @@ import logging
 import os
 from telegram.ext import *
 from telegram import *
-from BOT_TOKEN import *
+from BOT_TOKEN import TOKEN
+import google_ocr as ocr
+import google_regex as regex
 ### Logger
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -13,8 +15,7 @@ pp = pprint.PrettyPrinter(indent=4,width=20)
 updater = Updater(TOKEN, use_context=True)
 bot = Bot(token = TOKEN)
 data = {}                                                                       # Dictionary of dictionaries (user_id:item:price)
-ITEM, PRICE, MANUAL, SPLITEVEN, NAMES, DUTCH = range(6)                         # For convo handler for manual input of items
-
+ITEM, PRICE, MANUAL, SPLITEVEN, NAMES, DUTCH, PIC = range(7)                       # For convo handler for manual input of items
 
 
 def start(update, context):
@@ -35,7 +36,7 @@ def start(update, context):
                               reply_markup=ReplyKeyboardMarkup(keyboard), 
                               one_time_keyboard=True)
 
-    updater.dispatcher.add_handler(manual_input_items)                          # Handler to listen for manual input of items
+    updater.dispatcher.add_handler(pic_or_manual)                          # Handler to listen for manual input of items
     # TODO: Add handler to listen for Photo response
     # TODO: Add handler to listen for Help response
 
@@ -331,12 +332,86 @@ def create_keyboard(list_of_names):
 
 
 
-manual_input_items = ConversationHandler(
-    entry_points = [ MessageHandler(Filters.regex('^Input Items Manually$'), manual_input)
+
+
+def picture_input(update, context):
+
+    bot.send_message(chat_id=update._effective_chat.id,
+                 text="Please send a picture of your receipt",
+                 ForceReply = True,
+                 reply_markup=ReplyKeyboardRemove())
+
+    return PIC
+
+
+def pic_received(update,context):
+    print('pic sent')
+    # TODO: convo handler
+
+        #Send message 'Processing Receipt...'
+    context.bot.send_message(chat_id=update.message.chat_id,text='Processing receipt...')
+        #Retrieve the id of the photo with the largest size
+    photo_file = context.bot.get_file(update.message.photo[-1].file_id)
+        #Save path shows which directory to save photo to - EDIT ACCORDINGLY
+    save_path = '/Users/daniel/Downloads/Orbital/'  # need to change when host on heroko 
+        #Create path with filename of photo
+    filename = os.path.join(save_path,'{}.jpg'.format(photo_file.file_id))
+        #Download photo to the specified file path
+    photo_file.download(filename)
+        #Send message to update user that receipt has been received
+    context.bot.send_message(chat_id=update.message.chat_id,text='Receipt received!')
+
+    user_id = update._effective_chat.id
+    response_dict = ocr.get_full_response_dict(filename)
+    item_dict = regex.combined_parse_and_regex(response_dict,15)
+    data[user_id]['item_list'] = item_dict
+
+    pp.pprint(data[user_id])
+
+    man_done(update,context)
+
+
+
+
+
+def start_help():
+    print("start_help")
+    
+    keyboard = [
+                [KeyboardButton("Send a Photo of Receipt")],
+                [KeyboardButton("Input Items Manually"), KeyboardButton("Help")],
+                ]
+
+
+    bot.send_message(chat_id=update._effective_chat.id,
+                 text= 'Please choose either to: \n' +
+                        '- Take a picture of receipt\n' +
+                        #' '*5 + 'or\n' +
+                        '- Key in the details manually \n\n' +
+                        'Enter /start again to restart',
+                 reply_markup=ReplyKeyboardMarkup(keyboard), 
+                 one_time_keyboard=True)
+
+    pass
+
+
+
+
+
+
+
+
+pic_or_manual = ConversationHandler(
+    entry_points = [ MessageHandler(Filters.regex('^Input Items Manually$'), manual_input),
+                     MessageHandler(Filters.regex('^Send a Photo of Receipt$'), picture_input),
+                     MessageHandler(Filters.regex('^Help$'), start_help),
+                     #MessageHandler(Filters.photo, pic_received)
                      ],
+    
     states = {
         ITEM : [MessageHandler(Filters.text, input_item)],
-        PRICE : [MessageHandler(Filters.text, input_price)]
+        PRICE : [MessageHandler(Filters.text, input_price)],
+        PIC : [MessageHandler(Filters.photo, pic_received)]
         },
     fallbacks = [CommandHandler('cancel', cancel),
                  CommandHandler('done', man_done)],
@@ -399,25 +474,10 @@ def button(update, context):
                                 'Enter /start again to restart')
     else:
         context.bot.send_message(chat_id=query.message.chat_id, text="Please select a valid option")
+"""
 
-def picture(update,context):
-    updater.dispatcher.add_handler(MessageHandler(Filters.photo,picture))
-    print('pic')
 
-        #Send message 'Processing Receipt...'
-    context.bot.send_message(chat_id=update.message.chat_id,text='Processing receipt...')
-        #Retrieve the id of the photo with the largest size
-    photo_file = context.bot.get_file(update.message.photo[-1].file_id)
-        #Save path shows which directory to save photo to - EDIT ACCORDINGLY
-    save_path = '/Users/daniel/Downloads/Orbital'
-        #Create path with filename of photo
-    filename = os.path.join(save_path,'{}.jpg'.format(photo_file.file_id))
-        #Download photo to the specified file path
-    photo_file.download(filename)
-        #Send message to update user that receipt has been received
-    context.bot.send_message(chat_id=update.message.chat_id,text='Receipt received!')
-    ### TO ADD : remove handler
-
+"""
 def manual(update,context):
     
     user_id = update._effective_chat.id
@@ -451,14 +511,14 @@ def manual(update,context):
 
 
 
-
-
 ### Commands
-def help(update, context):
-    update.message.reply_text("Use /start to test this bot.")
+def bef_start_help(update, context):
+    update.message.reply_text("Use /start to get started!")
 def error(update, context):
     """Log Errors caused by Updates."""
     logger.warning('Update "%s" caused error "%s"', update, context.error)
+
+    
 ### Extra Functions
 def test(update, context):
     context.bot.send_message(chat_id=update.message.chat_id, text="I'm a bot, please talk to me!")
@@ -466,20 +526,18 @@ def wrong_command(update, context):
     context.bot.send_message(chat_id=update.message.chat_id, text="Sorry, I didn't understand that command.")
 def echo(update, context):
     context.bot.send_message(chat_id=update.message.chat_id, text=update.message.text)
-
 def caps(update, context):
     print("hello:)")
     text_caps = ' '.join(context.args).upper()
     print(text_caps)
     context.bot.send_message(chat_id=update.message.chat_id, text=text_caps)
-### Inline Mode Function
+    # Inline Mode Function
 def inline_caps(update, context):
     pp.pprint(update.to_dict())
     print("hello")
     query = update.inline_query.query
     if not query:
-        return
-
+        return 
     results = list()
     results.append(
         InlineQueryResultArticle(
@@ -497,18 +555,26 @@ def inline_caps(update, context):
 def main():
     print(bot.getMe())
     updater.dispatcher.add_handler(CommandHandler('start', start))
+    updater.dispatcher.add_handler(CommandHandler('help', bef_start_help))  # Help Command
+
+
+
+
+
 
 ### EXTRA FUNCTIONS
     #updater.dispatcher.add_handler(MessageHandler(Filters.text, echo))
     updater.dispatcher.add_handler(CommandHandler('test', test))
     updater.dispatcher.add_handler(CommandHandler('caps', caps))
     updater.dispatcher.add_handler(InlineQueryHandler(inline_caps))
-### EXTRA FUNCTIONS
-
-    # Help Command
-    updater.dispatcher.add_handler(CommandHandler('help', help))
+### EXTRA FUNCTIONS 
     # Wrong Command
     #updater.dispatcher.add_handler(MessageHandler(Filters.command, wrong_command)
+
+
+
+
+
 
     # Log errors
     updater.dispatcher.add_error_handler(error)
@@ -522,5 +588,5 @@ if __name__ == '__main__':
     main()
 
 # TODO: Get a keypad for number input
-# TODO:Filter user inputs account for $
+# TODO: Filter user inputs account for $
 # TODO: To auto detect GST and service charge
