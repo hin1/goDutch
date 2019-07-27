@@ -2,7 +2,7 @@ import logging
 import os
 from telegram.ext import *
 from telegram import *
-from modules.BOT_TOKEN import TOKEN
+#from modules.BOT_TOKEN import TOKEN
 import modules.google_ocr as ocr
 import modules.google_regex as regex
 ### Logger
