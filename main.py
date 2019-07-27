@@ -2,10 +2,10 @@ import modules.google_regex as regex
 import modules.google_ocr as ocr
 import pprint
 import modules.menu as menu
-#from modules.BOT_TOKEN import TOKEN
+from modules.BOT_TOKEN import TOKEN
 import os
 
-TOKEN = "TOKEN"
+#TOKEN = "TOKEN"
 PORT = int(os.environ.get('PORT', '8443'))
 updater = menu.Updater(TOKEN)
 # add handlers
