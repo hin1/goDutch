@@ -131,6 +131,8 @@ dmypy.json
 
 #Token
 BOT_TOKEN.py
+google_ocr2.py
+main(wrong).py
 
 
 # End of https://www.gitignore.io/api/python

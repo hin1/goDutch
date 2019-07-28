@@ -9,8 +9,10 @@ import operator
 pp = pprint.PrettyPrinter()
 
 #file = '/Users/seanchan/goDutch/test/testpic1-full_response.txt' #MACS
-file = '/Users/seanchan/goDutch/test/testpic2-text_annotation.txt' #BURGER KING
+#file = '/Users/seanchan/goDutch/test/testpic2-text_annotation.txt' #BURGER KING
 #file = '/Users/seanchan/goDutch/test/testpic3-full_response.txt' #SABOTEN
+#file = '/Users/seanchan/goDutch/test/testpic4-full_response.txt' #Secret Recipe
+file = '/Users/seanchan/goDutch/test/testpic5-full_response.txt' #Ameens
 
 formatRegex = re.compile(r'(desc(ription)?|item|name|am(oun)?t|q(uanti)?ty|price|total){1,4}',re.IGNORECASE)
 format2Regex = re.compile(r'''
@@ -23,11 +25,11 @@ format2Regex = re.compile(r'''
                             ''',re.IGNORECASE|re.VERBOSE) #USE FINDALL FOR THIS
 
 aboveItemRegex = re.compile(r'''
-                            (cashier|gst|table|bill|to\ go|take\ away|dine\ in|tel|fax|inv(oice)?|tax|receipt|check|print|sgd)|
+                            (guest|cashier|gst|table|bill|to\ go|take\ away|dine\ in|tel|fax|inv(oice)?|tax|receipt|check|print|sgd)|
                             (\d\d:\d\d(:\d\d)?)|
                             (\d\d(/|-)\d\d(/|-)\d\d(\d\d)?)
                             ''',re.IGNORECASE|re.VERBOSE)
-belowItemRegex = re.compile(r'(item|to?ta?l|change|cash|gst|amount|service|tot|rounding|ch(ar)?ge?)',re.IGNORECASE)
+belowItemRegex = re.compile(r'(%|diner|disc(ount)?|item|to?ta?l|change|cash|gst|amount|service|tot|rounding|ch(ar)?ge?)',re.IGNORECASE)
 
 itemformatRegex = re.compile(r'(desc(ription)?|item|name)',re.IGNORECASE)
 priceformatRegex = re.compile(r'(price|am(oun)?t)',re.IGNORECASE)
@@ -43,32 +45,30 @@ priceRegex = re.compile(r'''(
                         )''',re.VERBOSE)
 
 discountPriceRegex = re.compile(r'''
-                        (
-                        disc(ount)?
-                        (\.|:)?
-                        \s
-                        )
+                                (
+                                (
+                                -
+                                (\d|B|O)+
+                                \.
+                                (\d|B|O){2}
+                                $
+                                )|
 
-                        .*?
-                        
-                        (
-                        (
-                        -
-                        (\d|B|O)+
-                        \.
-                        (\d|B|O){2}
-                        $
-                        )|
+                                (
+                                (\d|B|O)+
+                                \.
+                                (\d|B|O){2}
+                                -
+                                $
+                                )
+                                )
+                                ''',re.VERBOSE)
 
-                        (
-                        (\d|B|O)+
-                        \.
-                        (\d|B|O){2}
-                        -
-                        $
-                        )
-                        )
-                        ''',re.VERBOSE)
+discountformatRegex = re.compile(r'''
+                                (
+                                disc(ount)?|card
+                                )
+                                ''',re.VERBOSE|re.IGNORECASE)
 
 #Accounted cases: " x 1", "1 x ", " 1.00 ",
 qtyRegex = re.compile(r'''
@@ -223,8 +223,9 @@ def get_message_and_price_lines(words, page_left, page_right):
 
         match_price = re.search(priceRegex,word[2])
         match_non_item = re.search(belowItemRegex,line)
+        match_discount = discountPriceRegex.search(word[2])
         
-        if (match_non_item):
+        if (match_non_item or match_discount):
             continue
 
         #Condition: 1 -> price is located far right, 2 -> matches price regex, 3 -> no duplicates
@@ -262,12 +263,12 @@ def setup_regex(indent,price_lines,message):
     else:
         for i in range(len(order)):
             order[i] = order[i].lower()
-        if (('price' and ('amt' or 'amount')) in order):
+        if (('price' in order) and (('amt' in order) or ('amount' in order))):
             try:
                 order[order.index('amount')] = 'total'
             except:
                 order[order.index('amt')] = 'total'
-        if ('price' and 'amount' and 'amt' and 'total') not in order:
+        if (('price' not in order) and ('amount' not in order) and ('amt' not in order) and ('total' not in order)) :
             order.append('price')
         if ('total' in order) and (('price' or 'amount' or 'amt') not in order):
             order[order.index('total')] = 'price'
@@ -547,7 +548,7 @@ def get_item_price(align,order,price_lines,message):
                     elif totalformatRegex.search(element):
                         total_match = priceRegex.search(line)
                         if total_match:
-                            line = line.replace(total_match)
+                            line = line.replace(total_match.group(0),'')
                             dup_order.remove(element)
                         
                     elif itemformatRegex.search(element):
@@ -589,6 +590,7 @@ def get_item_price(align,order,price_lines,message):
             
     return data
 
+#GST and service charge, discounts
 def get_misc(price_lines,message,data):
 
     gst_included = False
@@ -596,6 +598,16 @@ def get_misc(price_lines,message,data):
     for i in range(price_lines[-1],len(message)):
         
         line = message[i]
+
+        #Check for discount
+        discount_match = discountPriceRegex.search(line)
+
+        if discount_match:
+            discount = discount_match.group(0)
+            discount = float(discount.replace('B','8').replace('O','0').replace('-',''))
+            data['discount'] = discount
+
+        #Check for gst or service charge
         price_match = priceRegex.search(line)
         
         if price_match:
@@ -614,6 +626,7 @@ def get_misc(price_lines,message,data):
             
     return data
 
+#Take away free items
 def clean_up(data):
     
     for item in list(data):
@@ -621,6 +634,12 @@ def clean_up(data):
             del data[item]
 
     return data
+
+
+
+
+
+
 
 def fcombined_parse_and_regex(filename,threshold):
 
