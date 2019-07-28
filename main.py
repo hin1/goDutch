@@ -13,25 +13,16 @@ PORT = int(os.environ.get('PORT', '8443'))
 updater = Updater(TOKEN,use_context=True)
 # add handlers
 
-
 print(TOKEN)
 #pp = pprint.PrettyPrinter()
-
 #updater = menu.Updater(menu.TOKEN, use_context=True)
 bot = Bot(token = TOKEN)
-
 #def main():
 
  #   file = '/Users/seanchan/goDutch/test/testpic4.jpeg'
-
   #  response_dict = ocr.get_full_response_dict(file)
    # data = regex.combined_parse_and_regex(response_dict,15)
    # pp.pprint(data)
-
-
-
-
-
 
 #from modules.BOT_TOKEN import TOKEN
 
@@ -39,13 +30,12 @@ bot = Bot(token = TOKEN)
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 ### Pretty Print
-import pprint
 pp = pprint.PrettyPrinter(indent=4,width=20)
 #pp.pprint(update.to_dict())
 #updater = Updater(TOKEN, use_context=True)
 #bot = Bot(token = TOKEN)
 data = {}                                                                       # Dictionary of dictionaries (user_id:item:price)
-ITEM, PRICE, MANUAL, SPLITEVEN, NAMES, DUTCH, PIC = range(7)                       # For convo handler for manual input of items
+ITEM, PRICE, MANUAL, SPLITEVEN, NAMES, DUTCH, PIC, ADDNAME = range(8)                       # For convo handler for manual input of items
 
 
 def start(update, context):
@@ -221,21 +211,16 @@ a= {"apples":{"price":1, "people":[]},
                                         # To remove after testing Dummy list
 
 names=[]                                # list of names to reuse
+b = {}
 
-b= {"apples":{"price":1, "people":[]},
-    "bannna":{"price":2, "people":[]},
-    "cherry":{"price":3, "people":[]},
-    "durians":{"price":4, "people":[]}
-    }                                   # to store names
-#TODO take in wrong user intput
 
-def dutch(update, context):
+def dutch_selected(update, context):
     user_id = update._effective_chat.id
     print("goingdutch")
 
     # Who ordered - iterate through list of items?
     # for item in data[user_id]['item_list']:                #To comment in after testing
-
+    b = dict(a)
     if a:
         item = next(iter(a))
         price = a[item]["price"]
@@ -245,7 +230,9 @@ def dutch(update, context):
         bot.send_message(chat_id=update.message.chat_id,
                          text= "Who ordered " +
                                 item +
-                                " ?" ,
+                                " ($" +
+                                price +
+                                ") ?" ,
                           reply_markup = ReplyKeyboardMarkup(create_keyboard(names)),
                           #reply_markup = ForceReply(force_reply=True)
                          )
@@ -264,28 +251,77 @@ def get_names(update, context):
 
     item = next(iter(a))
     price = a[item]["price"]
+    people = a[item]["people"]
 
     if name == "All of the above":
         for people in names:
             b[item]["people"].append(people)
-        # Do something
+
     else:
         if name not in names:
             names.append(name) # for keyboard
         b[item]["people"].append(name)
 
+    bot.send_message(chat_id=update.message.chat_id,
+                             text= "Is there anyone sharing " +
+                             item +
+                             " with +
+                             iterate_names(people) +
+                             " ?" ,
+                             reply_markup = ReplyKeyboardMarkup(create_add_keyboard(names)),
+                             #reply_markup = ForceReply(force_reply=True)
+                             )
 
 
     print(item)
     print (price)
     print(name)
-    a.pop(item)
+#a.pop(item)
 
     # add to dictionary of names if in
     # catch all option
-    return dutch(update,context)
+    return ADDNAME
 
 
+
+def iterate_names(list):
+    output = ""
+    for names in list:
+        output += names + ", "
+    return output
+
+def additional_names(update, context):
+    user_id = update._effective_chat.id
+    item = next(iter(a))
+    name = update.message.text
+    price = a[item]["price"]
+    people = a[item]["people"]
+    
+    if name == "No":
+        a.pop(item)
+    
+    
+    """else:
+        a[item]["people"].append(name)
+        if name not in names:
+            names.append(name)"""
+    
+    return get_names(update,context)
+
+
+
+dutch_selected(update,context)
+
+def create_add_keyboard(names):
+    keyboard = ["No"]
+    
+    for person in list_of_names:
+        button = [KeyboardButton(person)]
+        keyboard.append(button)
+    if keyboard:
+        keyboard.append([KeyboardButton("All of the above")])   # Add this button if there is at least one entry
+    
+    return keyboard
 
 # Manually enter new name or take from dynamic keybard
 # Have an all option also
@@ -449,13 +485,14 @@ pic_or_manual = ConversationHandler(
 
 
 split_method = ConversationHandler(
-    entry_points = [ MessageHandler(Filters.regex('^GoDutch$'), dutch),
-                     MessageHandler(Filters.regex('^a$'), dutch),  # To remove after testing
+    entry_points = [ MessageHandler(Filters.regex('^GoDutch$'), dutch_selected),
+                     MessageHandler(Filters.regex('^a$'), dutch_selected),  # To remove after testing
                     MessageHandler(Filters.regex('^Split Even$'), split)
                      ],
     states = {
         SPLITEVEN: [MessageHandler(Filters.text, get_no_of_people)],
         NAMES: [MessageHandler(Filters.text, get_names)],
+        ADDNAME: [MessageHandler(Filters.text,additional_names],
         },
     fallbacks = [CommandHandler('cancel', cancel),
                  CommandHandler('end',end)],
@@ -620,6 +657,7 @@ if __name__ == '__main__':
 # TODO: Get a keypad for number input
 # TODO: Filter user inputs account for $
 # TODO: To auto detect GST and service charge
+# TODO take in wrong user intput
 
 """
 
