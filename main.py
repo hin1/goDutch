@@ -8,7 +8,7 @@ import logging
 from telegram.ext import *
 from telegram import *
 
-TOKEN = TOKEN
+#TOKEN = TOKEN
 PORT = int(os.environ.get('PORT', '8443'))
 updater = Updater(TOKEN,use_context=True)
 # add handlers
