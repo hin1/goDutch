@@ -383,7 +383,7 @@ def pic_received(update,context):
         #Retrieve the id of the photo with the largest size
     photo_file = context.bot.get_file(update.message.photo[-1].file_id)
         #Save path shows which directory to save photo to - EDIT ACCORDINGLY
-    save_path = '/Users/daniel/Downloads/Orbital/'  # need to change when host on heroko
+    save_path = '/app/test'  # need to change when host on heroko
         #Create path with filename of photo
     filename = os.path.join(save_path,'{}.jpg'.format(photo_file.file_id))
         #Download photo to the specified file path
