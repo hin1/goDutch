@@ -395,7 +395,7 @@ def pic_received(update,context):
     response_dict = ocr.get_full_response_dict(filename)
     item_dict = regex.combined_parse_and_regex(response_dict,15)
     data[user_id]['item_list'] = item_dict
-
+    os.remove(filename)
     pp.pprint(data[user_id])
 
     man_done(update,context)
