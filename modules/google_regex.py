@@ -8,8 +8,8 @@ import operator
 
 pp = pprint.PrettyPrinter()
 
-file = '/Users/seanchan/goDutch/test/testpic1-full_response.txt' #MACS
-#file = '/Users/seanchan/goDutch/test/testpic2-text_annotation.txt' #BURGER KING
+#file = '/Users/seanchan/goDutch/test/testpic1-full_response.txt' #MACS
+file = '/Users/seanchan/goDutch/test/testpic2-text_annotation.txt' #BURGER KING
 #file = '/Users/seanchan/goDutch/test/testpic3-full_response.txt' #SABOTEN
 
 formatRegex = re.compile(r'(desc(ription)?|item|name|am(oun)?t|q(uanti)?ty|price|total){1,4}',re.IGNORECASE)
@@ -262,13 +262,12 @@ def setup_regex(indent,price_lines,message):
     else:
         for i in range(len(order)):
             order[i] = order[i].lower()
-            
         if (('price' and ('amt' or 'amount')) in order):
-                try:
-                    order[order.index('amount')] = 'total'
-                except:
-                    order[order.index('amt')] = 'total'
-        if ('price' or 'amount' or 'amt' or 'total') not in order:
+            try:
+                order[order.index('amount')] = 'total'
+            except:
+                order[order.index('amt')] = 'total'
+        if ('price' and 'amount' and 'amt' and 'total') not in order:
             order.append('price')
         if ('total' in order) and (('price' or 'amount' or 'amt') not in order):
             order[order.index('total')] = 'price'
@@ -314,20 +313,29 @@ def setup_regex(indent,price_lines,message):
         if (price_lines[1] == (price_lines[0] + 1)):
             
             if (price_lines[-1] == (price_lines[-2] + 1)):
-                
+                #both first and last item single line
                 for i in range(price_lines[1],price_lines[-2]):
-                    print("Checking lines: ")
-                    print("prev: " + message[i])
-                    print("next: " + message[i+1])
+                    '''
+                    print("\n")
+                    print("Checking lines: " + str(i) + " and " + str(i+1))
+                    print("prev: " + str(indent[i]) + " " + message[i])
+                    print("next: " + str(indent[i+1]) + " " + message[i+1])
+                    print("indent difference = " + str(indent[i+1] - indent[i]))
+                    '''
                     _prev = i
                     _next = i+1
-                    if (indent[_next] - indent[_prev] > 15):
-                        align = 1
+
+                    #if single line, continue
+                    if (_prev in price_lines) and (_next in price_lines):
+                        continue
                     else:
-                        align = -1
-                #align = 2
-                #both first and last item single line
-                #Check if indentment is off
+                        if ((indent[_next] - indent[_prev]) > 15):
+                            align = 1
+                            break
+                        else:
+                            align = -1
+                            break
+
             else:
                 align = 1
         else:
@@ -419,11 +427,12 @@ def get_item_price(align,order,price_lines,message):
             item = ""
             print("Line " + str(price_lines[i]) + ":\n")
 
+            orig_order = order.copy()
+            dup_order = order.copy() #Create duplicate order
+
             for j in range(price_lines[i],price_lines[i+1]):
 
-                line = message[price_lines[j]]
-                orig_order = order.copy()
-                dup_order = order.copy() #Create duplicate order
+                line = message[j]
         
                 for element in orig_order:
                     print(line)
@@ -451,7 +460,7 @@ def get_item_price(align,order,price_lines,message):
                     elif totalformatRegex.search(element):
                         total_match = priceRegex.search(line)
                         if total_match:
-                            line = line.replace(total_match)
+                            line = line.replace(total_match.group(0), '')
                             dup_order.remove(element)
                         
                     elif itemformatRegex.search(element):
@@ -498,13 +507,14 @@ def get_item_price(align,order,price_lines,message):
             item = ""
             print("Line " + str(price_lines[i]) + ":\n")
 
+            orig_order = order.copy()
+            dup_order = order.copy() #Create duplicate order
+
             #Evaluate single item
             #From line right after price line to the next price line
             for j in range(price_lines[i-1]+1,price_lines[i]+1):
                 
                 line = message[j]
-                orig_order = order.copy()
-                dup_order = order.copy() #Create duplicate order
                 
                 #print(str(j) + ": " + line)
                 #print(orig_order)
