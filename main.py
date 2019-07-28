@@ -8,7 +8,7 @@ import logging
 from telegram.ext import *
 from telegram import *
 
-TOKEN = "TOKEN"
+#TOKEN = TOKEN
 PORT = int(os.environ.get('PORT', '8443'))
 updater = Updater(TOKEN,use_context=True)
 # add handlers
@@ -21,9 +21,9 @@ print(TOKEN)
 bot = Bot(token = TOKEN)
 
 #def main():
-    
+
  #   file = '/Users/seanchan/goDutch/test/testpic4.jpeg'
-    
+
   #  response_dict = ocr.get_full_response_dict(file)
    # data = regex.combined_parse_and_regex(response_dict,15)
    # pp.pprint(data)
@@ -63,7 +63,7 @@ def start(update, context):
 
 
     update.message.reply_text('Hello! \n''Please select an option: ',
-                              reply_markup=ReplyKeyboardMarkup(keyboard), 
+                              reply_markup=ReplyKeyboardMarkup(keyboard),
                               one_time_keyboard=True)
 
     updater.dispatcher.add_handler(pic_or_manual)                          # Handler to listen for manual input of items
@@ -100,7 +100,7 @@ def input_item(update,context):
     print(data[user_id])
     # TODO: deal with duplicates - python dictionary cannot deal with duplicates
             # Either use spaces or blank characters or (1),(2),(3) etc...
-            # Take in GST and Service Charge  
+            # Take in GST and Service Charge
     return PRICE
 
 def input_price(update,context):
@@ -132,7 +132,7 @@ def input_price(update,context):
     return ITEM
 
 def enumerate_items(dic):
-    text_width = 30                                                                 #To change based on device width 
+    text_width = 30                                                                 #To change based on device width
     output = "Item:" + (text_width-len("Item:"))*" " + "Price($):\n"
     for key, val in dic.items() :
         output += key + " "*(text_width-len(key)) + val + '\n'
@@ -219,7 +219,7 @@ a= {"apples":{"price":1, "people":[]},
     "durians":{"price":4, "people":[]}
     }
                                         # To remove after testing Dummy list
-    
+
 names=[]                                # list of names to reuse
 
 b= {"apples":{"price":1, "people":[]},
@@ -232,10 +232,10 @@ b= {"apples":{"price":1, "people":[]},
 def dutch(update, context):
     user_id = update._effective_chat.id
     print("goingdutch")
-    
+
     # Who ordered - iterate through list of items?
     # for item in data[user_id]['item_list']:                #To comment in after testing
- 
+
     if a:
         item = next(iter(a))
         price = a[item]["price"]
@@ -261,7 +261,7 @@ def dutch(update, context):
 def get_names(update, context):
     user_id = update._effective_chat.id
     name = update.message.text
-    
+
     item = next(iter(a))
     price = a[item]["price"]
 
@@ -273,8 +273,8 @@ def get_names(update, context):
         if name not in names:
             names.append(name) # for keyboard
         b[item]["people"].append(name)
-    
-    
+
+
 
     print(item)
     print (price)
@@ -284,7 +284,7 @@ def get_names(update, context):
     # add to dictionary of names if in
     # catch all option
     return dutch(update,context)
-    
+
 
 
 # Manually enter new name or take from dynamic keybard
@@ -293,7 +293,7 @@ def get_names(update, context):
 
 def godutch_output(update,context):
 
-# To do get godutch function   
+# To do get godutch function
     results = print_dutch_results(b)
     print("end")
     bot.send_message(chat_id=update.message.chat_id,
@@ -305,13 +305,13 @@ def godutch_output(update,context):
     return end(update,context)
 
 def print_dutch_results(dic):
-    text_width = 30                                                       #To change based on device width 
+    text_width = 30                                                       #To change based on device width
     string = "Name:" + (text_width-len("Name:"))*" " + "Amount($):\n"
     my_dic = get_dutch_results(dic)
-    
+
     """ To prnt the output in a formatted string form """
-                                                                
-    
+
+
     for key, val in my_dic.items() :
         string += key + " "*(text_width-len(key)) + "{:.2f}".format(val) + '\n'
 
@@ -323,9 +323,9 @@ def get_dutch_results(dic):
     output = {}
     print(dic)
     for people in names:
-        output[people] = 0    
+        output[people] = 0
         print("hi")
-        
+
     for item , value in dic.items():
         print("hello")
         print(item)
@@ -342,20 +342,20 @@ def get_dutch_results(dic):
 
         for person in people:
             output[person] += payable_per_person
-            
+
     """returns a dictionary of names of people and the corressponding prices they have to pay"""
     print(output)
     return output
 
 def create_keyboard(list_of_names):
     """create a dynamic keyboaard based on names enteed before and an all fucntion"""
-    keyboard = []                
+    keyboard = []
     for person in list_of_names:
-        button = [KeyboardButton(person)] 
+        button = [KeyboardButton(person)]
         keyboard.append(button)
     if keyboard:
         keyboard.append([KeyboardButton("All of the above")])   # Add this button if there is at least one entry
-    
+
     return keyboard
 
 
@@ -383,7 +383,7 @@ def pic_received(update,context):
         #Retrieve the id of the photo with the largest size
     photo_file = context.bot.get_file(update.message.photo[-1].file_id)
         #Save path shows which directory to save photo to - EDIT ACCORDINGLY
-    save_path = '/Users/daniel/Downloads/Orbital/'  # need to change when host on heroko 
+    save_path = '/Users/daniel/Downloads/Orbital/'  # need to change when host on heroko
         #Create path with filename of photo
     filename = os.path.join(save_path,'{}.jpg'.format(photo_file.file_id))
         #Download photo to the specified file path
@@ -406,7 +406,7 @@ def pic_received(update,context):
 
 def start_help():
     print("start_help")
-    
+
     keyboard = [
                 [KeyboardButton("Send a Photo of Receipt")],
                 [KeyboardButton("Input Items Manually"), KeyboardButton("Help")],
@@ -419,7 +419,7 @@ def start_help():
                         #' '*5 + 'or\n' +
                         '- Key in the details manually \n\n' +
                         'Enter /start again to restart',
-                 reply_markup=ReplyKeyboardMarkup(keyboard), 
+                 reply_markup=ReplyKeyboardMarkup(keyboard),
                  one_time_keyboard=True)
 
     pass
@@ -437,7 +437,7 @@ pic_or_manual = ConversationHandler(
                      MessageHandler(Filters.regex('^Help$'), start_help),
                      #MessageHandler(Filters.photo, pic_received)
                      ],
-    
+
     states = {
         ITEM : [MessageHandler(Filters.text, input_item)],
         PRICE : [MessageHandler(Filters.text, input_price)],
@@ -486,7 +486,7 @@ updater.dispatcher.add_handler(split_method) # To Remove after testing
 """
 def button(update, context):
     query = update.callback_query
-    
+
     if query.data == 'Pic':
         query.edit_message_text("Selected option: {}\n".format(query.data) +
                                 'Please send a picture of your reciept:')
@@ -509,7 +509,7 @@ def button(update, context):
 
 """
 def manual(update,context):
-    
+
     user_id = update._effective_chat.id
 
     update.callback_query.edit_message_text("Please enter item number " +
@@ -522,7 +522,7 @@ def manual(update,context):
                                             )
     #update._effective_message.edit_text('test')
     #ForceReply(force_reply=True)
-   
+
 
 """
 
@@ -548,7 +548,7 @@ def error(update, context):
     """Log Errors caused by Updates."""
     logger.warning('Update "%s" caused error "%s"', update, context.error)
 
-    
+
 ### Extra Functions
 def test(update, context):
     context.bot.send_message(chat_id=update.message.chat_id, text="I'm a bot, please talk to me!")
@@ -567,7 +567,7 @@ def inline_caps(update, context):
     print("hello")
     query = update.inline_query.query
     if not query:
-        return 
+        return
     results = list()
     results.append(
         InlineQueryResultArticle(
@@ -597,7 +597,7 @@ def main():
     updater.dispatcher.add_handler(CommandHandler('test', test))
     updater.dispatcher.add_handler(CommandHandler('caps', caps))
     updater.dispatcher.add_handler(InlineQueryHandler(inline_caps))
-### EXTRA FUNCTIONS 
+### EXTRA FUNCTIONS
     # Wrong Command
     #updater.dispatcher.add_handler(MessageHandler(Filters.command, wrong_command)
 
@@ -631,7 +631,7 @@ if __name__ == '__main__':
 
 
 
-   
+
 
 def main():
     print(bot.getMe())
@@ -661,7 +661,7 @@ def main():
     updater.start_webhook(listen="0.0.0.0",
                       port=PORT,
                       url_path=TOKEN)
-    updater.bot.set_webhook("https://desolate-basin-70071.herokuapp.com/" + TOKEN)
+    updater.bot.set_webhook("https://go-dutch-bot.herokuapp.com/" + TOKEN)
     updater.idle()
 
 
