@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 pp = pprint.PrettyPrinter(indent=4,width=20)
 #pp.pprint(update.to_dict())
 
-TOKEN = "token"
+TOKEN = "728096945:AAEUgvz_mTe_6U17N6wTJImKDC5ei4wqfxs"
 PORT = int(os.environ.get('PORT', '8443'))
 updater = Updater(TOKEN, use_context=True)
 bot = Bot(token = TOKEN)
@@ -23,7 +23,7 @@ bot = Bot(token = TOKEN)
 print(TOKEN)
 
 data = {}                                                                                   # Dictionary of dictionaries (user_id:item:price)
-ITEM, PRICE, MANUAL, SPLITEVEN, NAMES, DUTCH, PIC, ADDNAME = range(8)                       # For convo handler for manual input of items
+ITEM, PRICE, MANUAL, SPLITEVEN, NAMES, DUTCH, PIC, NOTHING = range(8)                       # For convo handler for manual input of items
 
 def start(update, context):
     user_id = update._effective_chat.id
@@ -134,6 +134,7 @@ def input_done(update,context):
                               one_time_keyboard=True
                               )
     updater.dispatcher.add_handler(split_method)
+    init_dict(update, context)
     return ConversationHandler.END
 
 def end(update, context):
@@ -176,7 +177,7 @@ def get_no_of_people(update,context):
 def sum_all(dic):
     total = 0
     for price in dic.values():
-        total += float(price)
+        total += float(price['price'])
     return total
 
 def parse_dic(dic):
@@ -221,15 +222,17 @@ def enumerate_names(name_list):
 # TODO: 
 # String printing wrong 
 # All of the above when pressed lags
-
-
+def init_dict(update, context):
+    user_id = update._effective_chat.id
+    print("init dic")
+    data[user_id]['item_list'] = parse_dic(data[user_id]['item_list'])              # Parse dictionary to godutch format
+    clone_dict(data[user_id]['item_list'], data[user_id]['go_dutch_item_list'] )    # Clone a dummy dictionary 
+    
 
 def dutch_selected(update, context):
     user_id = update._effective_chat.id
     print("goingdutch")
     # Who ordered - iterate through list of items?    
-    data[user_id]['item_list'] = parse_dic(data[user_id]['item_list'])              # Parse dictionary to godutch format
-    clone_dict(data[user_id]['item_list'], data[user_id]['go_dutch_item_list'] )    # Clone a dummy dictionary 
     if data[user_id]['item_list'] != {}:
             
         print("not empty")  
@@ -247,7 +250,7 @@ def dutch_selected(update, context):
         print(price)
         print("price printed here^")
 
-        print(item)
+        #print(item)
         
         if bool(data[user_id]['name_list']):
             bot.send_message(chat_id=update.message.chat_id,
@@ -258,6 +261,7 @@ def dutch_selected(update, context):
                                 ") ?" ,
                           reply_markup = ReplyKeyboardMarkup(create_keyboard(people, name_list))  
                          )
+            return NAMES
         else:
             bot.send_message(chat_id=update.message.chat_id,
                          text= "Who ordered " +
@@ -268,8 +272,8 @@ def dutch_selected(update, context):
                           reply_markup = ReplyKeyboardRemove(),   
                           #reply_markup = ForceReply(force_reply=True)
                          )
-            
-        return NAMES
+            print ("to get names")
+            return NAMES
     else:
         print(data[user_id]['item_list'])
         print(data[user_id]['go_dutch_item_list'])
@@ -299,29 +303,35 @@ def pop_dict(dic):
         del dic[to_pop]
         print (dic)
     print(dic)
+    return dic
 
 def get_names(update, context):
     user_id = update._effective_chat.id
     name = update.message.text
-
+    print("in get names")
     item = next(iter(data[user_id]['item_list']))
     price = data[user_id]['item_list'][item]["price"]
     people = data[user_id]['item_list'][item]["people"]
+    print(item)
     #print(data[user_id]['item_list'])
     #print(data[user_id]['go_dutch_item_list'])
     print (data)
     if name == "All of the above":
         for people in data[user_id]['name_list']:
             data[user_id]['go_dutch_item_list'][item]["people"].append(people)
-            return ADDNAME
+            return NAMES
     elif name == 'No':
         #data[user_id]['item_list'].pop(item)   # BUG HERE
         #del data[user_id]['item_list'][item]
-        print("poping")
-        print(item)
+        #print("poping")
+        #print(item)
         #pop_dict(data[user_id]['item_list'][item])
+        #print (data)
         #data[user_id]['item_list'].pop(item)
-        del data[user_id]['item_list'][item]
+        #data[user_id]['item_list'][item] = {}
+        #print(data)
+        data[user_id]['item_list'].pop(item)
+        print(data)
         dutch_selected(update, context)
     else:
         if name not in data[user_id]['name_list']:
@@ -548,7 +558,8 @@ split_method = ConversationHandler(
     states = {
         SPLITEVEN: [MessageHandler(Filters.text, get_no_of_people)],
         NAMES: [MessageHandler(Filters.text, get_names)],
-        #ADDNAME: [MessageHandler(Filters.text, additional_names)],
+        
+       #NOTHING : [MessageHandler(Filters.text, dutch_selected)],
         },
     fallbacks = [CommandHandler('cancel', cancel),
                  CommandHandler('end',end)],
@@ -556,7 +567,7 @@ split_method = ConversationHandler(
 
 # TODO: Combine all states for each handler into one converstion handler and only one entry point - /start
 
-
+# TODO: Make sure convo handler ends
 
 
 #update._effective_message.edit_text('test')
