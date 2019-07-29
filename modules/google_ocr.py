@@ -4,7 +4,7 @@
 import os
 
 # Remember to transfer the key to server
-#os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/daniel/Downloads/Orbital/GoDutch-641ac56fc8a1.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/daniel/Downloads/Orbital/GoDutch-641ac56fc8a1.json"
 #Image file to process
 #file_name = "/Users/seanchan/goDutch/test/testpic3.jpg"
 
