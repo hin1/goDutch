@@ -23,7 +23,7 @@ bot = Bot(token = TOKEN)
 print(TOKEN)
 
 data = {}                                                                                   # Dictionary of dictionaries (user_id:item:price)
-ITEM, PRICE, MANUAL, SPLITEVEN, NAMES, DUTCH, PIC, NOTHING = range(8)                       # For convo handler for manual input of items
+ITEM, PRICE, MANUAL, SPLITEVEN, NAMES, DUTCH, PIC, END = range(8)                       # For convo handler for manual input of items
 
 def start(update, context):
     user_id = update._effective_chat.id
@@ -278,7 +278,8 @@ def dutch_selected(update, context):
         print(data[user_id]['item_list'])
         print(data[user_id]['go_dutch_item_list'])
         print(data[user_id]['name_list'])
-        godutch_output(update,context)
+        return godutch_output(update,context)
+        #return END
 
 def pop_dict(dic):
     """To pop the items in a nested dictionary
@@ -558,7 +559,7 @@ split_method = ConversationHandler(
     states = {
         SPLITEVEN: [MessageHandler(Filters.text, get_no_of_people)],
         NAMES: [MessageHandler(Filters.text, get_names)],
-        
+        END: [MessageHandler(Filters.text, end)]
        #NOTHING : [MessageHandler(Filters.text, dutch_selected)],
         },
     fallbacks = [CommandHandler('cancel', cancel),
@@ -647,4 +648,6 @@ if __name__ == '__main__':
 # TODO: Get a keypad for number input
 # TODO: Filter user inputs account for $
 # TODO: To auto detect GST and service charge
-# TODO take in wrong user intput
+# TODO: take in wrong user intput
+# TODO: Change all options chosen to commadn form so as to avoid mix up with user input
+# TODO: Make sure convo handler is OFF
