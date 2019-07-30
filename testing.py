@@ -309,52 +309,63 @@ def pop_dict(dic):
 def get_names(update, context):
     user_id = update._effective_chat.id
     name = update.message.text
+    print("name input is") 
+    print(name)
+    #if name == "GoDutch" or " Split Even":
+     #   print("name iis go dutch!!!")
+      #  return end(update, context)
     print("in get names")
-    item = next(iter(data[user_id]['item_list']))
-    price = data[user_id]['item_list'][item]["price"]
-    people = data[user_id]['item_list'][item]["people"]
-    print(item)
-    #print(data[user_id]['item_list'])
-    #print(data[user_id]['go_dutch_item_list'])
-    print (data)
-    if name == "All of the above":
-        for people in data[user_id]['name_list']:
-            data[user_id]['go_dutch_item_list'][item]["people"].append(people)
-            return NAMES
-    elif name == 'No':
-        #data[user_id]['item_list'].pop(item)   # BUG HERE
-        #del data[user_id]['item_list'][item]
-        #print("poping")
-        #print(item)
-        #pop_dict(data[user_id]['item_list'][item])
-        #print (data)
-        #data[user_id]['item_list'].pop(item)
-        #data[user_id]['item_list'][item] = {}
-        #print(data)
-        data[user_id]['item_list'].pop(item)
-        print(data)
-        dutch_selected(update, context)
-    else:
-        if name not in data[user_id]['name_list']:
-            data[user_id]['name_list'].append(name) # for keyboard
-
-        data[user_id]['go_dutch_item_list'][item]["people"].append(name)
-
-        bot.send_message(chat_id=update.message.chat_id,
-                             text= "Is there anyone sharing " +
-                             item +
-                             " with " +
-                             enumerate_names(people) +
-                             " ?" ,
-                             reply_markup = ReplyKeyboardMarkup(create_add_keyboard(people, data[user_id]['name_list'] )),
-                             #reply_markup = ForceReply(force_reply=True)
-                             )
+    if bool(data[user_id]['item_list']) :
+        item = next(iter(data[user_id]['item_list']))
+        price = data[user_id]['item_list'][item]["price"]
+        people = data[user_id]['item_list'][item]["people"]
         print(item)
-        print (price)
-        print(name)
-    # add to dictionary of names if in
-    # catch all option
-        return NAMES
+        #print(data[user_id]['item_list'])
+        #print(data[user_id]['go_dutch_item_list'])
+        print (data)
+        if name == "All of the above":
+            for people in data[user_id]['name_list']:
+                data[user_id]['go_dutch_item_list'][item]["people"].append(people)
+                return NAMES
+        elif name == 'No':
+            #data[user_id]['item_list'].pop(item)   # BUG HERE
+            #del data[user_id]['item_list'][item]
+            #print("poping")
+            #print(item)
+            #pop_dict(data[user_id]['item_list'][item])
+            #print (data)
+            #data[user_id]['item_list'].pop(item)
+            #data[user_id]['item_list'][item] = {}
+            #print(data)
+            data[user_id]['item_list'].pop(item)
+            print(data)
+            dutch_selected(update, context)
+        else:
+            if name not in data[user_id]['name_list']:
+                data[user_id]['name_list'].append(name) # for keyboard
+
+            data[user_id]['go_dutch_item_list'][item]["people"].append(name)
+
+            bot.send_message(chat_id=update.message.chat_id,
+                                 text= "Is there anyone sharing " +
+                                 item +
+                                 " with " +
+                                 enumerate_names(people) +
+                                 " ?" ,
+                                 reply_markup = ReplyKeyboardMarkup(create_add_keyboard(people, data[user_id]['name_list'] )),
+                                 #reply_markup = ForceReply(force_reply=True)
+                                 )
+            print(item)
+            print (price)
+            print(name)
+        # add to dictionary of names if in
+        # catch all option
+            return NAMES
+    else :
+        print("diictiionary end")
+        return ConversationHandler.END
+
+    # TOOO : Find Bug here
 
 """
 def additional_names(update, context):
