@@ -202,33 +202,14 @@ def enumerate_names(name_list):
         output += names + ", "
     return output
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# TODO: 
-# String printing wrong 
-# All of the above when pressed lags
+# TODO: String printing wrong 
+# TODO: All of the above when pressed lags
 def init_dict(update, context):
     user_id = update._effective_chat.id
     print("init dic")
     data[user_id]['item_list'] = parse_dic(data[user_id]['item_list'])              # Parse dictionary to godutch format
     clone_dict(data[user_id]['item_list'], data[user_id]['go_dutch_item_list'] )    # Clone a dummy dictionary 
     
-
 def dutch_selected(update, context):
     user_id = update._effective_chat.id
     print("goingdutch")
@@ -402,8 +383,6 @@ def godutch_output(update,context):
                          )
     return end(update,context)
 
-
-
 def get_dutch_results(update,context,dic):
     user_id = update._effective_chat.id
     output = {}
@@ -425,7 +404,6 @@ def get_dutch_results(update,context,dic):
         print(no_of_people)
         print(payable_per_person)
 
-
         for person in people:
             output[person] += payable_per_person
 
@@ -439,7 +417,6 @@ def print_dutch_results(update,context,dic):
     my_dic = get_dutch_results(update,context,dic)
 
     """ To print the output in a formatted string form """
-
 
     for key, val in my_dic.items() :
         string += key + " "*(text_width-len(key)) + "{:.2f}".format(val) + '\n'
@@ -470,7 +447,6 @@ def create_keyboard(items_list_people, name_list):
         keyboard.append([KeyboardButton("All of the above")])   # Add this button if there is at least 2 entries
     return keyboard
 
-
 def picture_input(update, context):
 
     bot.send_message(chat_id=update._effective_chat.id,
@@ -492,7 +468,6 @@ def pic_received(update,context):
     filename = os.path.join(save_path,'{}.jpg'.format(photo_file.file_id))                      # Create path with filename of photo
     photo_file.download(filename)                                                               # Download photo to the specified file path    
     context.bot.send_message(chat_id=update.message.chat_id,text='Receipt received!')           # Send message to update user that receipt has been received
-
     
     response_dict = ocr.get_full_response_dict(filename)                                        # Running the picture through OCR
     item_dict = regex.combined_parse_and_regex(response_dict,15)                                # Running OCR output to get data to dictionary of items and prices
@@ -500,12 +475,9 @@ def pic_received(update,context):
     os.remove(filename)                                                                         # Deleting picture
 
     pp.pprint(data[user_id])
-
     input_done(update,context)
 
 # TODO: Fix the bug above in this function above 
-
-
 
 def start_help(update, context):
     keyboard = [
@@ -528,7 +500,6 @@ pic_or_manual = ConversationHandler(
                      MessageHandler(Filters.regex('^Help$'), start_help),
                      #MessageHandler(Filters.photo, pic_received)
                      ],
-
     states = {
         ITEM : [MessageHandler(Filters.text, input_item)],
         PRICE : [MessageHandler(Filters.text, input_price)],
@@ -537,7 +508,6 @@ pic_or_manual = ConversationHandler(
     fallbacks = [CommandHandler('cancel', cancel),
                  CommandHandler('done', input_done)],
     )
-
 
 
 split_method = ConversationHandler(
@@ -555,9 +525,7 @@ split_method = ConversationHandler(
     )
 
 # TODO: Combine all states for each handler into one converstion handler and only one entry point - /start
-
 # TODO: Make sure convo handler ends
-
 
 #update._effective_message.edit_text('test')
 #ForceReply(force_reply=True)
@@ -615,23 +583,22 @@ def main():
     """
     # Log errors
     updater.dispatcher.add_error_handler(error)
+
     # Start Bot
-    updater.start_polling()
+    #updater.start_polling()
+    """ To run locally ^ """
     # Run the bot until the user presses Ctrl-C or the process receives SIGINT,
     # SIGTERM or SIGABRT
     # updater.idle()
-
-"""
     updater.start_webhook(listen="0.0.0.0",
                       port=PORT,
                       url_path=TOKEN)
     updater.bot.set_webhook("https://go-dutch-bot.herokuapp.com/" + TOKEN)
     updater.idle()
-
-"""
+    """ To run on Heroku """
+    # Comment out above to run locally
 if __name__ == '__main__':
     main()
-
 
 # TODO: Get a keypad for number input
 # TODO: Filter user inputs account for $
@@ -639,3 +606,6 @@ if __name__ == '__main__':
 # TODO: take in wrong user intput
 # TODO: Change all options chosen to commadn form so as to avoid mix up with user input
 # TODO: Make sure convo handler is OFF
+# TODO: Send Error messages to user
+# TODO: Log Error messgaes
+# TODO: Use try and catch 
