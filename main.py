@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 pp = pprint.PrettyPrinter(indent=4,width=20)
 #pp.pprint(update.to_dict())
 
-TOKEN = "728096945:AAEUgvz_mTe_6U17N6wTJImKDC5ei4wqfxs"
+TOKEN = "TOKEN"
 PORT = int(os.environ.get('PORT', '8443'))
 updater = Updater(TOKEN, use_context=True)
 bot = Bot(token = TOKEN)
