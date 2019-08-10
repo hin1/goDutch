@@ -1,29 +1,11 @@
-import modules.google_regex as regex
-import modules.google_ocr as ocr
-import pprint
-#import modules.menu as menu
-#from modules.BOT_TOKEN import TOKEN
 import os
 import logging
+import pprint
 from telegram.ext import *
 from telegram import *
-
-TOKEN = "728096945:AAEUgvz_mTe_6U17N6wTJImKDC5ei4wqfxs"
-PORT = int(os.environ.get('PORT', '8443'))
-updater = Updater(TOKEN,use_context=True)
-# add handlers
-
-print(TOKEN)
-#pp = pprint.PrettyPrinter()
-#updater = menu.Updater(menu.TOKEN, use_context=True)
-bot = Bot(token = TOKEN)
-#def main():
-
- #   file = '/Users/seanchan/goDutch/test/testpic4.jpeg'
-  #  response_dict = ocr.get_full_response_dict(file)
-   # data = regex.combined_parse_and_regex(response_dict,15)
-   # pp.pprint(data)
-
+import modules.google_regex as regex
+import modules.google_ocr as ocr
+#import modules.menu as menu
 #from modules.BOT_TOKEN import TOKEN
 
 ### Logger
@@ -32,36 +14,36 @@ logger = logging.getLogger(__name__)
 ### Pretty Print
 pp = pprint.PrettyPrinter(indent=4,width=20)
 #pp.pprint(update.to_dict())
-#updater = Updater(TOKEN, use_context=True)
-#bot = Bot(token = TOKEN)
-data = {}                                                                       # Dictionary of dictionaries (user_id:item:price)
-ITEM, PRICE, MANUAL, SPLITEVEN, NAMES, DUTCH, PIC, ADDNAME = range(8)                       # For convo handler for manual input of items
 
+TOKEN = "728096945:AAEUgvz_mTe_6U17N6wTJImKDC5ei4wqfxs"
+PORT = int(os.environ.get('PORT', '8443'))
+updater = Updater(TOKEN, use_context=True)
+bot = Bot(token = TOKEN)
+
+print(TOKEN)
+
+data = {}                                                                                   # Dictionary of dictionaries (user_id:item:price)
+ITEM, PRICE, MANUAL, SPLITEVEN, NAMES, DUTCH, PIC, END = range(8)                       # For convo handler for manual input of items
 
 def start(update, context):
-    #pp.pprint(update.to_dict())
     user_id = update._effective_chat.id
     data[user_id] = {}
     data[user_id]['prev_input'] = -1
     data[user_id]['item_list'] = {}
-    data[user_id]['item_counter'] = 0                                           # To count the number of items
+    data[user_id]['item_counter'] = 0                                                       # To count the number of items
+    data[user_id]['go_dutch_item_list'] = {}
+    data[user_id]['name_list'] =[]
 
     keyboard = [
                 [KeyboardButton("Send a Photo of Receipt")],
                 [KeyboardButton("Input Items Manually"), KeyboardButton("Help")],
                 ]
 
-
     update.message.reply_text('Hello! \n''Please select an option: ',
                               reply_markup=ReplyKeyboardMarkup(keyboard),
                               one_time_keyboard=True)
-
-    updater.dispatcher.add_handler(pic_or_manual)                          # Handler to listen for manual input of items
-    # TODO: Add handler to listen for Photo response
-    # TODO: Add handler to listen for Help response
-
-
-
+    print(data)
+    updater.dispatcher.add_handler(pic_or_manual)                                           # Handler to listen for manual input of items
 
 def manual_input(update,context):
 
@@ -88,9 +70,9 @@ def input_item(update,context):
     print("\nitem is " + item_name)
     data[user_id]['prev_input'] = update.message.text
     print(data[user_id])
-    # TODO: deal with duplicates - python dictionary cannot deal with duplicates
-            # Either use spaces or blank characters or (1),(2),(3) etc...
-            # Take in GST and Service Charge
+    # TODO: Deal with duplicates - python dictionary cannot deal with duplicates
+    # Either use spaces or blank characters or (1),(2),(3) etc...
+    # TODO: Take in GST and Service Charge
     return PRICE
 
 def input_price(update,context):
@@ -138,12 +120,12 @@ def cancel(update,context):
                               reply_markup=ReplyKeyboardRemove())
     return ConversationHandler.END
 
-def man_done(update,context):
+def input_done(update,context):
     user = update.message.from_user
-    logger.info("User %s done with manual list input.", user.first_name)
+    logger.info("User %s done with manual/picture input.", user.first_name)
 
     keyboard = keyboard = [
-                [KeyboardButton("GoDutch"), KeyboardButton("Split Even")],              # Left-Right or Up-Down button layout?
+                [KeyboardButton("GoDutch"), KeyboardButton("Split Even")],
                 ]
 
     update.message.reply_text('Done!\n'+
@@ -152,6 +134,7 @@ def man_done(update,context):
                               one_time_keyboard=True
                               )
     updater.dispatcher.add_handler(split_method)
+    init_dict(update, context)
     return ConversationHandler.END
 
 def end(update, context):
@@ -172,7 +155,6 @@ def split(update, context):
                  text="How many people is splitting?",
                  ForceReply = True,
                  reply_markup=ReplyKeyboardRemove())
-
     return SPLITEVEN
 
 def get_no_of_people(update,context):
@@ -187,7 +169,7 @@ def get_no_of_people(update,context):
 
     bot.send_message(chat_id=update.message.chat_id,
                  text= "Each person needs to pay: $"+ "{:.2f}".format(answer),
-                 reply_markup=ReplyKeyboardRemove()
+                 reply_markup = ReplyKeyboardRemove()
                      )
     end(update,context)
     return ConversationHandler.END
@@ -195,142 +177,222 @@ def get_no_of_people(update,context):
 def sum_all(dic):
     total = 0
     for price in dic.values():
-        total += float(price)
+        total += float(price['price'])
     return total
 
+def parse_dic(dic):
+    """takes in {apple:1,banana:2} -> apples":{"price":1, "people":[]},"bannna":{"price":2, "people":[]}"""
+    for item, price in dic.items():
+        temp = {}
+        temp['price'] = price
+        temp['people'] = []
+        dic[item] = temp
+    return dic
+# TODO: Parse the dictionary to allow the item counter to be also updated
+def clone_dict(a,b):
+    for key, value in a.items():
+        b[key] = value
+        
+def enumerate_names(name_list):
+    output = ""
+    for names in name_list:
+        if names == name_list[-1]:
+            output += names
+            continue
+        output += names + ", "
+    return output
 
 
 
 
 
-a= {"apples":{"price":1, "people":[]},
-    "bannna":{"price":2, "people":[]},
-    "cherry":{"price":3, "people":[]},
-    "durians":{"price":4, "people":[]}
-    }
-                                        # To remove after testing Dummy list
 
-names=[]                                # list of names to reuse
-b = {}
 
+
+
+
+
+
+
+
+
+
+
+
+# TODO: 
+# String printing wrong 
+# All of the above when pressed lags
+def init_dict(update, context):
+    user_id = update._effective_chat.id
+    print("init dic")
+    data[user_id]['item_list'] = parse_dic(data[user_id]['item_list'])              # Parse dictionary to godutch format
+    clone_dict(data[user_id]['item_list'], data[user_id]['go_dutch_item_list'] )    # Clone a dummy dictionary 
+    
 
 def dutch_selected(update, context):
     user_id = update._effective_chat.id
     print("goingdutch")
+    # Who ordered - iterate through list of items?    
+    if data[user_id]['item_list'] != {}:
+            
+        print("not empty")  
+        item = next(iter(data[user_id]['item_list']))                                   # Find the next item in the dictionary 
+        people = data[user_id]['item_list'][item]["people"]                             # People list of that item 
+        name_list = data[user_id]['name_list']                                          # List of all previously input names
+        price = data[user_id]['item_list'][item]['price']                               # Price of that item
 
-    # Who ordered - iterate through list of items?
-    # for item in data[user_id]['item_list']:                #To comment in after testing
-    b = dict(a)
-    if a:
-        item = next(iter(a))
-        price = a[item]["price"]
+        print(data)
+        print("item is")
         print(item)
+        print("people sharing this item")
+        print(people)
+        print("price is ")
         print(price)
+        print("price printed here^")
 
-        bot.send_message(chat_id=update.message.chat_id,
+        #print(item)
+        
+        if bool(data[user_id]['name_list']):
+            bot.send_message(chat_id=update.message.chat_id,
                          text= "Who ordered " +
                                 item +
                                 " ($" +
-                                price +
+                                str(price) +
                                 ") ?" ,
-                          reply_markup = ReplyKeyboardMarkup(create_keyboard(names)),
+                          reply_markup = ReplyKeyboardMarkup(create_keyboard(people, name_list))  
+                         )
+            return NAMES
+        else:
+            bot.send_message(chat_id=update.message.chat_id,
+                         text= "Who ordered " +
+                                item +
+                                " ($" +
+                                str(price) +
+                                ") ?" ,
+                          reply_markup = ReplyKeyboardRemove(),   
                           #reply_markup = ForceReply(force_reply=True)
                          )
-        return NAMES
+            print ("to get names")
+            return NAMES
     else:
-        print(a)
-        print(b)
-        print(names)
-        godutch_output(update,context)
+        print(data[user_id]['item_list'])
+        print(data[user_id]['go_dutch_item_list'])
+        print(data[user_id]['name_list'])
+        return godutch_output(update,context)
+        #return END
 
+def pop_dict(dic):
+    """To pop the items in a nested dictionary
+    print("pop_dict")
+    for item in dic:
+        print('entered loop')
+        if bool(dic):
+            dic.pop(item)
+            print('pop internal items')
+    #return dic
+"""
+    print("poping_dict")
+    print(dic)
+    keys_to_pop = []
+    for key in dic.keys():
+        keys_to_pop.append(key)
+        print(key)
+        #del dic[key]
+    print(keys_to_pop)
+    for to_pop in keys_to_pop:
+        #dic.pop(to_pop)
+        del dic[to_pop]
+        print (dic)
+    print(dic)
+    return dic
 
-    #TODO: Figure out how to assign multiple people to same item
 def get_names(update, context):
     user_id = update._effective_chat.id
     name = update.message.text
-
-    item = next(iter(a))
-    price = a[item]["price"]
-    people = a[item]["people"]
-
-    if name == "All of the above":
-        for people in names:
-            b[item]["people"].append(people)
-
-    else:
-        if name not in names:
-            names.append(name) # for keyboard
-        b[item]["people"].append(name)
-
-    bot.send_message(chat_id=update.message.chat_id,
-                             text= "Is there anyone sharing " +
-                             item +
-                             " with" +
-                             iterate_names(people) +
-                             " ?" ,
-                             reply_markup = ReplyKeyboardMarkup(create_add_keyboard(names)),
-                             #reply_markup = ForceReply(force_reply=True)
-                             )
-
-
-    print(item)
-    print (price)
+    print("get_names function called")
+    print("name inputed is") 
     print(name)
-#a.pop(item)
+    #if name == "GoDutch" or " Split Even":
+     #   print("name iis go dutch!!!")
+      #  return end(update, context)
+    
+    if bool(data[user_id]['item_list']) :
+        item = next(iter(data[user_id]['item_list']))
+        price = data[user_id]['item_list'][item]["price"]
+        people = data[user_id]['item_list'][item]["people"]
+        print(item)
+        #print(data[user_id]['item_list'])
+        #print(data[user_id]['go_dutch_item_list'])
+        print (data)
+        if name == "All of the above":
+            for people in data[user_id]['name_list']:
+                data[user_id]['go_dutch_item_list'][item]["people"].append(people)
+                return NAMES
+        elif name == 'No':
+            #data[user_id]['item_list'].pop(item)   # BUG HERE
+            #del data[user_id]['item_list'][item]
+            #print("poping")
+            #print(item)
+            #pop_dict(data[user_id]['item_list'][item])
+            #print (data)
+            #data[user_id]['item_list'].pop(item)
+            #data[user_id]['item_list'][item] = {}
+            #print(data)
+            data[user_id]['item_list'].pop(item)
+            print(data)
+            dutch_selected(update, context)
+        else:
+            if name not in data[user_id]['name_list']:
+                data[user_id]['name_list'].append(name) # for keyboard
 
-    # add to dictionary of names if in
-    # catch all option
-    return ADDNAME
+            data[user_id]['go_dutch_item_list'][item]["people"].append(name)
 
+            bot.send_message(chat_id=update.message.chat_id,
+                                 text= "Is there anyone sharing " +
+                                 item +
+                                 " with " +
+                                 enumerate_names(people) +
+                                 " ?" ,
+                                 reply_markup = ReplyKeyboardMarkup(create_add_keyboard(people, data[user_id]['name_list'] )),
+                                 #reply_markup = ForceReply(force_reply=True)
+                                 )
+            print(item)
+            print (price)
+            print(name)
+        # add to dictionary of names if in
+        # catch all option
+            return NAMES
+    else :
+        print("conversation supposed to end here")
+        return ConversationHandler.END
 
+    # TOOO : Find Bug here
 
-def iterate_names(list):
-    output = ""
-    for names in list:
-        output += names + ", "
-    return output
-
+"""
 def additional_names(update, context):
     user_id = update._effective_chat.id
-    item = next(iter(a))
+    item = next(iter(data[user_id]['item_list']))
     name = update.message.text
-    price = a[item]["price"]
-    people = a[item]["people"]
+    price = data[user_id]['item_list'][item]["price"]
+    people = data[user_id]['item_list'][item]["people"]
     
     if name == "No":
-        a.pop(item)
+        data[user_id]['item_list'].pop(item)
     
     
-    """else:
+    else:
         a[item]["people"].append(name)
         if name not in names:
-            names.append(name)"""
+            names.append(name)
     
     return get_names(update,context)
+#dutch_selected(update,context)
+"""
 
-
-
-dutch_selected(update,context)
-
-def create_add_keyboard(names):
-    keyboard = ["No"]
-    
-    for person in list_of_names:
-        button = [KeyboardButton(person)]
-        keyboard.append(button)
-    if keyboard:
-        keyboard.append([KeyboardButton("All of the above")])   # Add this button if there is at least one entry
-    
-    return keyboard
-
-# Manually enter new name or take from dynamic keybard
-# Have an all option also
-# Create dictionary of people
 
 def godutch_output(update,context):
-
-# To do get godutch function
-    results = print_dutch_results(b)
+    user_id = update._effective_chat.id
+    results = print_dutch_results(update,context,data[user_id]['go_dutch_item_list'])
     print("end")
     bot.send_message(chat_id=update.message.chat_id,
                          text= "Here is what everyone needs to pay:\n" +
@@ -340,25 +402,13 @@ def godutch_output(update,context):
                          )
     return end(update,context)
 
-def print_dutch_results(dic):
-    text_width = 30                                                       #To change based on device width
-    string = "Name:" + (text_width-len("Name:"))*" " + "Amount($):\n"
-    my_dic = get_dutch_results(dic)
-
-    """ To prnt the output in a formatted string form """
 
 
-    for key, val in my_dic.items() :
-        string += key + " "*(text_width-len(key)) + "{:.2f}".format(val) + '\n'
-
-    # TODO: Make text_width dynamic and based on device
-    # TDOD: Deal with strings that are too long - truncate them?
-    return string
-
-def get_dutch_results(dic):
+def get_dutch_results(update,context,dic):
+    user_id = update._effective_chat.id
     output = {}
     print(dic)
-    for people in names:
+    for people in data[user_id]['name_list']:
         output[people] = 0
         print("hi")
 
@@ -369,7 +419,7 @@ def get_dutch_results(dic):
         price = value['price']
         people = value['people']
         no_of_people = len(people)
-        payable_per_person = price / no_of_people
+        payable_per_person = float(price) / no_of_people
         print(price)
         print(people)
         print(no_of_people)
@@ -383,89 +433,94 @@ def get_dutch_results(dic):
     print(output)
     return output
 
-def create_keyboard(list_of_names):
-    """create a dynamic keyboaard based on names enteed before and an all fucntion"""
-    keyboard = []
-    for person in list_of_names:
+def print_dutch_results(update,context,dic):
+    text_width = 30                                                       #To change based on device width
+    string = "Name:" + (text_width-len("Name:"))*" " + "Amount($):\n"
+    my_dic = get_dutch_results(update,context,dic)
+
+    """ To print the output in a formatted string form """
+
+
+    for key, val in my_dic.items() :
+        string += key + " "*(text_width-len(key)) + "{:.2f}".format(val) + '\n'
+
+    # TODO: Make text_width dynamic and based on device
+    # TDOD: Deal with strings that are too long - truncate them?
+    return string
+
+def create_add_keyboard(items_list_people, name_list):
+    keyboard = [["No"]]
+    for person in name_list:
+        if person in items_list_people:
+            continue
         button = [KeyboardButton(person)]
         keyboard.append(button)
-    if keyboard:
-        keyboard.append([KeyboardButton("All of the above")])   # Add this button if there is at least one entry
-
+    if keyboard !=[["No"]] and len(keyboard) != 2:
+        keyboard.append([KeyboardButton("All of the above")])   # Add this button if there is at least one entry and not just No
     return keyboard
 
-
-
-
-
+def create_keyboard(items_list_people, name_list):
+    """create a dynamic keyboaard based on names entered before and an all function as well as exclude names that have been already matched to the item"""
+    keyboard = []
+    for person in name_list:
+        button = [KeyboardButton(person)]
+        keyboard.append(button)
+    if keyboard != [] and len(keyboard) != 1:
+        print("create keybaord . list not empty")
+        keyboard.append([KeyboardButton("All of the above")])   # Add this button if there is at least 2 entries
+    return keyboard
 
 
 def picture_input(update, context):
 
     bot.send_message(chat_id=update._effective_chat.id,
-                 text="Please send a picture of your receipt",
-                 ForceReply = True,
-                 reply_markup=ReplyKeyboardRemove())
-
+                     text="Please send a picture of your receipt",
+                     ForceReply = True,
+                     reply_markup=ReplyKeyboardRemove())
     return PIC
 
-
 def pic_received(update,context):
-    print('pic sent')
-    # TODO: convo handler
-
-        #Send message 'Processing Receipt...'
-    context.bot.send_message(chat_id=update.message.chat_id,text='Processing receipt...')
-        #Retrieve the id of the photo with the largest size
-    photo_file = context.bot.get_file(update.message.photo[-1].file_id)
-        #Save path shows which directory to save photo to - EDIT ACCORDINGLY
-    save_path = '/app/test'  # need to change when host on heroko
-        #Create path with filename of photo
-    filename = os.path.join(save_path,'{}.jpg'.format(photo_file.file_id))
-        #Download photo to the specified file path
-    photo_file.download(filename)
-        #Send message to update user that receipt has been received
-    context.bot.send_message(chat_id=update.message.chat_id,text='Receipt received!')
-
     user_id = update._effective_chat.id
-    response_dict = ocr.get_full_response_dict(filename)
-    item_dict = regex.combined_parse_and_regex(response_dict,15)
-    data[user_id]['item_list'] = item_dict
-    os.remove(filename)
+    print('pic sent')
+    
+    context.bot.send_message(chat_id=update.message.chat_id,text='Processing receipt...')       # Send message 'Processing Receipt...'
+    photo_file = context.bot.get_file(update.message.photo[-1].file_id)                         # Retrieve the id of the photo with the largest size       BUG PRONE <------- MUST FIX !!!
+    
+    #save_path = '/app/test'  # need to change when host on heroko                              # Save path shows which directory to save photo to
+    save_path= '/Users/daniel/Downloads/Orbital'
+
+    filename = os.path.join(save_path,'{}.jpg'.format(photo_file.file_id))                      # Create path with filename of photo
+    photo_file.download(filename)                                                               # Download photo to the specified file path    
+    context.bot.send_message(chat_id=update.message.chat_id,text='Receipt received!')           # Send message to update user that receipt has been received
+
+    
+    response_dict = ocr.get_full_response_dict(filename)                                        # Running the picture through OCR
+    item_dict = regex.combined_parse_and_regex(response_dict,15)                                # Running OCR output to get data to dictionary of items and prices
+    data[user_id]['item_list'] = item_dict                                                      # Assigning and saving dictionary to user
+    os.remove(filename)                                                                         # Deleting picture
+
     pp.pprint(data[user_id])
 
-    man_done(update,context)
+    input_done(update,context)
+
+# TODO: Fix the bug above in this function above 
 
 
 
-
-
-def start_help():
-    print("start_help")
-
+def start_help(update, context):
     keyboard = [
                 [KeyboardButton("Send a Photo of Receipt")],
                 [KeyboardButton("Input Items Manually"), KeyboardButton("Help")],
                 ]
-
-
     bot.send_message(chat_id=update._effective_chat.id,
                  text= 'Please choose either to: \n' +
                         '- Take a picture of receipt\n' +
                         #' '*5 + 'or\n' +
                         '- Key in the details manually \n\n' +
-                        'Enter /start again to restart',
+                        'Enter /start again to restart'
+                        'Enter /cancel at anytime to cancel' ,
                  reply_markup=ReplyKeyboardMarkup(keyboard),
                  one_time_keyboard=True)
-
-    pass
-
-
-
-
-
-
-
 
 pic_or_manual = ConversationHandler(
     entry_points = [ MessageHandler(Filters.regex('^Input Items Manually$'), manual_input),
@@ -480,103 +535,32 @@ pic_or_manual = ConversationHandler(
         PIC : [MessageHandler(Filters.photo, pic_received)]
         },
     fallbacks = [CommandHandler('cancel', cancel),
-                 CommandHandler('done', man_done)],
+                 CommandHandler('done', input_done)],
     )
+
 
 
 split_method = ConversationHandler(
     entry_points = [ MessageHandler(Filters.regex('^GoDutch$'), dutch_selected),
-                     MessageHandler(Filters.regex('^a$'), dutch_selected),  # To remove after testing
                     MessageHandler(Filters.regex('^Split Even$'), split)
                      ],
     states = {
         SPLITEVEN: [MessageHandler(Filters.text, get_no_of_people)],
         NAMES: [MessageHandler(Filters.text, get_names)],
-        ADDNAME: [MessageHandler(Filters.text,additional_names],
+        END: [MessageHandler(Filters.text, end)]
+       #NOTHING : [MessageHandler(Filters.text, dutch_selected)],
         },
     fallbacks = [CommandHandler('cancel', cancel),
                  CommandHandler('end',end)],
     )
 
+# TODO: Combine all states for each handler into one converstion handler and only one entry point - /start
+
+# TODO: Make sure convo handler ends
 
 
-
-updater.dispatcher.add_handler(split_method) # To Remove after testing
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-"""
-def button(update, context):
-    query = update.callback_query
-
-    if query.data == 'Pic':
-        query.edit_message_text("Selected option: {}\n".format(query.data) +
-                                'Please send a picture of your reciept:')
-        picture(update, context)
-
-    elif query.data == 'manual':
-        query.edit_message_text("Selected option: /manual"
-                                )
-        manual(update, context)
-    elif query.data == 'Help':
-        query.edit_message_text('Please choose either to: \n' +
-                                '1. Take a picture of receipt\n' +
-                                ' '*5 + 'or\n' +
-                                '2. Key in the details manually \n\n' +
-                                'Enter /start again to restart')
-    else:
-        context.bot.send_message(chat_id=query.message.chat_id, text="Please select a valid option")
-"""
-
-
-"""
-def manual(update,context):
-
-    user_id = update._effective_chat.id
-
-    update.callback_query.edit_message_text("Please enter item number " +
-                                            str(data[user_id]['item_counter']+1) +
-                                            #str(int(len(data[user_id]['item_list'])+1)) +
-                                            '\n' +
-                                            "Items so far : \n /manual "
-
-                                            #str(print_items(update,context))
-                                            )
-    #update._effective_message.edit_text('test')
-    #ForceReply(force_reply=True)
-
-
-"""
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#update._effective_message.edit_text('test')
+#ForceReply(force_reply=True)
 
 ### Commands
 def bef_start_help(update, context):
@@ -585,7 +569,7 @@ def error(update, context):
     """Log Errors caused by Updates."""
     logger.warning('Update "%s" caused error "%s"', update, context.error)
 
-
+"""
 ### Extra Functions
 def test(update, context):
     context.bot.send_message(chat_id=update.message.chat_id, text="I'm a bot, please talk to me!")
@@ -615,34 +599,20 @@ def inline_caps(update, context):
     )
     context.bot.answer_inline_query(update.inline_query.id, results)
 ### Extra Functions
-
-
-
 """
+
 def main():
     print(bot.getMe())
     updater.dispatcher.add_handler(CommandHandler('start', start))
     updater.dispatcher.add_handler(CommandHandler('help', bef_start_help))  # Help Command
-
-
-
-
-
-
+    """    
 ### EXTRA FUNCTIONS
     #updater.dispatcher.add_handler(MessageHandler(Filters.text, echo))
-    updater.dispatcher.add_handler(CommandHandler('test', test))
-    updater.dispatcher.add_handler(CommandHandler('caps', caps))
-    updater.dispatcher.add_handler(InlineQueryHandler(inline_caps))
-### EXTRA FUNCTIONS
-    # Wrong Command
+    #updater.dispatcher.add_handler(CommandHandler('test', test))   
+    #updater.dispatcher.add_handler(CommandHandler('caps', caps))
+    #updater.dispatcher.add_handler(InlineQueryHandler(inline_caps))
     #updater.dispatcher.add_handler(MessageHandler(Filters.command, wrong_command)
-
-
-
-
-
-
+    """
     # Log errors
     updater.dispatcher.add_error_handler(error)
     # Start Bot
@@ -650,58 +620,22 @@ def main():
     # Run the bot until the user presses Ctrl-C or the process receives SIGINT,
     # SIGTERM or SIGABRT
     # updater.idle()
-to comment in later ^
-if __name__ == '__main__':
-    main()
-
-# TODO: Get a keypad for number input
-# TODO: Filter user inputs account for $
-# TODO: To auto detect GST and service charge
-# TODO take in wrong user intput
 
 """
-
-
-
-
-
-
-
-
-
-
-
-def main():
-    print(bot.getMe())
-    updater.dispatcher.add_handler(CommandHandler('start', start))
-### EXTRA FUNCTIONS
-    #updater.dispatcher.add_handler(MessageHandler(Filters.text, echo))
-    updater.dispatcher.add_handler(CommandHandler('test', test))
-    updater.dispatcher.add_handler(CommandHandler('caps', caps))
-    updater.dispatcher.add_handler(InlineQueryHandler(inline_caps))
-### EXTRA FUNCTIONS
-
-    # Help Command
-    #updater.dispatcher.add_handler(CommandHandler('help', help))
-    # Wrong Command
-    #updater.dispatcher.add_handler(MessageHandler(Filters.command, wrong_command)
-
-    # Log errors
-    updater.dispatcher.add_error_handler(error)
-    # Start Bot
-   # menu.updater.start_polling()
-    # Run the bot until the user presses Ctrl-C or the process receives SIGINT,
-    # SIGTERM or SIGABRT
-    # updater.idle()
-    """to comment in later ^"""
-
-
     updater.start_webhook(listen="0.0.0.0",
                       port=PORT,
                       url_path=TOKEN)
     updater.bot.set_webhook("https://go-dutch-bot.herokuapp.com/" + TOKEN)
     updater.idle()
 
-
+"""
 if __name__ == '__main__':
     main()
+
+
+# TODO: Get a keypad for number input
+# TODO: Filter user inputs account for $
+# TODO: To auto detect GST and service charge
+# TODO: take in wrong user intput
+# TODO: Change all options chosen to commadn form so as to avoid mix up with user input
+# TODO: Make sure convo handler is OFF
